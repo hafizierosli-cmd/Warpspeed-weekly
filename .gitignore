@@ -1,0 +1,3 @@
+.substrait/
+__pycache__/
+.venv/
