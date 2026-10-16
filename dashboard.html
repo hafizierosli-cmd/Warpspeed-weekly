@@ -1,0 +1,879 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Weekly Warp Speed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+  :root{
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface: #fcfcfb;
+    --surface-2: #f2f1ec;
+    --text: #0b0b0b;
+    --text-2: #52514e;
+    --muted: #898781;
+    --grid: #e1e0d9;
+    --baseline: #c3c2b7;
+    --border: rgba(11,11,11,0.10);
+    --kv: #2a78d6;
+    --nkv: #eb6834;
+    --misc: #1baf7a;
+    --good: #0ca30c;
+    --good-text: #006300;
+    --warning: #fab219;
+    --warning-text: #8a5a00;
+    --critical: #d03b3b;
+    --critical-bg: rgba(208,59,59,0.10);
+    --warning-bg: rgba(250,178,25,0.14);
+    --good-bg: rgba(12,163,12,0.10);
+    --chip-bg: #eeece4;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --page: #0d0d0d;
+      --surface: #1a1a19;
+      --surface-2: #212120;
+      --text: #ffffff;
+      --text-2: #c3c2b7;
+      --muted: #898781;
+      --grid: #2c2c2a;
+      --baseline: #383835;
+      --border: rgba(255,255,255,0.10);
+      --kv: #3987e5;
+      --nkv: #d95926;
+      --misc: #199e70;
+      --good: #0ca30c;
+      --good-text: #0ca30c;
+      --warning: #fab219;
+      --warning-text: #fab219;
+      --critical: #e66767;
+      --critical-bg: rgba(230,103,103,0.14);
+      --warning-bg: rgba(250,178,25,0.14);
+      --good-bg: rgba(12,163,12,0.14);
+      --chip-bg: #262624;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --surface-2: #212120;
+    --text: #ffffff;
+    --text-2: #c3c2b7;
+    --muted: #898781;
+    --grid: #2c2c2a;
+    --baseline: #383835;
+    --border: rgba(255,255,255,0.10);
+    --kv: #3987e5;
+    --nkv: #d95926;
+    --misc: #199e70;
+    --good: #0ca30c;
+    --good-text: #0ca30c;
+    --warning: #fab219;
+    --warning-text: #fab219;
+    --critical: #e66767;
+    --critical-bg: rgba(230,103,103,0.14);
+    --warning-bg: rgba(250,178,25,0.14);
+    --good-bg: rgba(12,163,12,0.14);
+    --chip-bg: #262624;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--page);
+    color:var(--text);
+    font-family:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height:1.45;
+  }
+  .num{ font-family:"IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  .wrap{ max-width:1180px; margin:0 auto; padding-inline:20px; padding-block: 26px 60px; }
+
+  header.top{
+    display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:16px;
+    border-bottom:1px solid var(--border); padding-bottom:18px; margin-bottom:20px;
+  }
+  .eyebrow{ color:var(--muted); font-size:11.5px; letter-spacing:0.06em; text-transform:uppercase; margin:0 0 6px; font-weight:600;}
+  h1{ font-size:25px; margin:0; font-weight:700; letter-spacing:-0.01em; }
+  .weekctl{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+  .weekctl-row{ display:flex; align-items:center; gap:8px; }
+  .weekctl label{ font-size:10.5px; color:var(--muted); letter-spacing:0.05em; text-transform:uppercase; }
+  select#weekSelect{
+    appearance:none; -webkit-appearance:none;
+    background:var(--surface); border:1.5px solid var(--kv); color:var(--text);
+    font-family:"IBM Plex Mono", monospace; font-size:12.5px; font-weight:600;
+    padding:6px 28px 6px 10px; border-radius:5px; cursor:pointer;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232a78d6' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 7px center; background-size:12px;
+  }
+  select#weekSelect:focus{ outline:2px solid var(--kv); outline-offset:1px; }
+  .compared{ font-size:12px; color:var(--muted); }
+  .compared b{ color:var(--text-2); font-weight:600; }
+
+  .banner{
+    display:flex; gap:10px; align-items:flex-start;
+    background:var(--warning-bg); border:1px solid var(--warning); border-radius:8px;
+    padding:12px 14px; margin-bottom:22px; font-size:13px; color:var(--text);
+  }
+  .banner .dot{ width:8px; height:8px; border-radius:50%; background:var(--warning); margin-top:5px; flex:none; }
+  .banner b{ font-weight:600; }
+  .banner[hidden]{ display:none; }
+
+  section{ margin-bottom:22px; }
+  .panel{
+    background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px 20px;
+  }
+  .panel-head{ display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:14px; }
+  .panel-title{ font-size:15px; font-weight:600; }
+  .panel-sub{ font-size:11.5px; color:var(--muted); margin-top:3px; }
+
+  .kpi-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(190px,1fr)); gap:12px; margin-bottom:22px; }
+  .kpi{ background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--kv); border-radius:8px; padding:14px 16px; }
+  .kpi.nkv{ border-left-color:var(--nkv); }
+  .kpi.misc{ border-left-color:var(--misc); }
+  .kpi.flat{ border-left-color:var(--baseline); }
+  .kpi-label{ font-size:11px; color:var(--muted); margin-bottom:8px; }
+  .kpi-value{ font-size:27px; font-weight:600; font-family:"IBM Plex Mono", monospace; letter-spacing:-0.01em; }
+  .kpi-delta{ display:inline-flex; align-items:center; gap:4px; margin-top:7px; font-size:12px; font-weight:600; font-family:"IBM Plex Mono", monospace; }
+  .kpi-delta.favorable{ color:var(--good-text); }
+  .kpi-delta.unfavorable{ color:var(--critical); }
+  .kpi-delta.flat{ color:var(--muted); font-weight:500; }
+  .kpi-foot{ font-size:11px; color:var(--muted); margin-top:5px; }
+
+  .grid2{ display:grid; grid-template-columns:1.25fr 0.9fr; gap:16px; }
+  @media (max-width:920px){ .grid2{ grid-template-columns:1fr; } }
+
+  table.data{ width:100%; border-collapse:collapse; font-size:13px; }
+  table.data th{ text-align:left; font-weight:500; font-size:11px; color:var(--muted); padding:0 10px 8px 0; border-bottom:1px solid var(--border); white-space:nowrap; }
+  table.data td{ padding:9px 10px 9px 0; border-bottom:1px solid var(--border); vertical-align:top; }
+  table.data tr:last-child td{ border-bottom:none; }
+  table.data td.n, table.data th.n{ text-align:right; }
+  .table-scroll{ overflow-x:auto; }
+
+  .delta{ font-weight:600; font-family:"IBM Plex Mono", monospace; }
+  .delta.favorable{ color:var(--good-text); }
+  .delta.unfavorable{ color:var(--critical); }
+  .delta.flat{ color:var(--muted); font-weight:500; }
+
+  .badge{ display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:11px; font-size:11px; font-weight:700; white-space:nowrap; }
+  .badge.attn{ background:var(--critical-bg); color:var(--critical); }
+  .badge.strong{ background:var(--good-bg); color:var(--good-text); }
+  .badge.stable{ background:var(--chip-bg); color:var(--text-2); }
+
+  .taglist{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0; }
+  .cat-row{ border-bottom:1px solid var(--border); }
+  .cat-row:last-child{ border-bottom:none; }
+  .cat-row-main{
+    display:flex; align-items:center; gap:14px; padding:12px 4px; cursor:pointer; background:none; border:none; width:100%; text-align:left; color:var(--text); font:inherit;
+  }
+  .cat-row-main:hover{ background:var(--surface-2); }
+  .cat-rank{ font-family:"IBM Plex Mono", monospace; font-size:11px; color:var(--muted); width:16px; flex:none; }
+  .cat-name{ font-weight:600; font-size:13.5px; flex:1 1 160px; min-width:140px; }
+  .cat-bar-wrap{ flex:2 1 200px; min-width:120px; height:8px; background:var(--surface-2); border-radius:4px; overflow:hidden; }
+  .cat-bar{ height:100%; border-radius:4px; }
+  .cat-count{ font-family:"IBM Plex Mono", monospace; font-size:13px; font-weight:600; width:72px; text-align:right; flex:none; }
+  .cat-share{ font-family:"IBM Plex Mono", monospace; font-size:11.5px; color:var(--muted); width:52px; text-align:right; flex:none; }
+  .cat-wow{ width:78px; text-align:right; flex:none; font-size:12px; }
+  .cat-fix{ width:100px; flex:none; text-align:right; }
+  .fixtag{ font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:10px; white-space:nowrap; }
+  .fixtag.quick{ background:var(--good-bg); color:var(--good-text); }
+  .fixtag.partial{ background:var(--warning-bg); color:var(--warning-text); }
+  .fixtag.multi{ background:var(--chip-bg); color:var(--text-2); }
+  .chevron{ width:14px; flex:none; color:var(--muted); transition:transform .15s ease; }
+  .cat-row.open .chevron{ transform:rotate(90deg); }
+  .cat-detail{ display:none; padding:4px 4px 16px 34px; }
+  .cat-row.open .cat-detail{ display:block; }
+  .cat-detail-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media (max-width:640px){ .cat-detail-grid{ grid-template-columns:1fr; } .cat-row-main{ flex-wrap:wrap; } }
+  .cat-detail h4{ font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--muted); margin:0 0 8px; font-weight:600; }
+  .minibar-row{ display:flex; align-items:center; gap:8px; font-size:12.5px; padding:4px 0; }
+  .minibar-label{ flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .minibar-track{ flex:1 1 70px; height:6px; background:var(--surface-2); border-radius:3px; overflow:hidden; }
+  .minibar-fill{ height:100%; background:var(--kv); border-radius:3px; }
+  .minibar-val{ font-family:"IBM Plex Mono", monospace; font-size:11.5px; color:var(--text-2); width:44px; text-align:right; flex:none; }
+  .no-detail{ color:var(--muted); font-size:12.5px; padding:16px 4px; }
+
+  .spike-pill{ font-size:10px; font-weight:700; padding:2px 7px; border-radius:9px; background:var(--warning-bg); color:var(--warning-text); white-space:nowrap; }
+
+  .upload-zone{
+    border:1.5px dashed var(--border); border-radius:8px; padding:20px; text-align:center; cursor:pointer;
+    color:var(--muted); font-size:12.5px; transition:border-color .15s ease, background .15s ease;
+  }
+  .upload-zone:hover, .upload-zone.drag{ border-color:var(--kv); background:var(--surface-2); }
+  .upload-zone b{ color:var(--text); }
+  .upload-status{ margin-top:10px; font-size:12px; font-family:"IBM Plex Mono", monospace; }
+  .upload-status.ok{ color:var(--good-text); }
+  .upload-status.err{ color:var(--critical); }
+
+  footer{ color:var(--muted); font-size:11.5px; border-top:1px solid var(--border); padding-top:14px; margin-top:8px; line-height:1.7; }
+  footer code{ font-family:"IBM Plex Mono", monospace; background:var(--surface-2); padding:1px 5px; border-radius:3px; }
+
+  svg text{ font-family:"IBM Plex Mono", monospace; fill:var(--text-2); }
+  .trend-line{ fill:none; stroke:var(--kv); stroke-width:2; }
+  .trend-area{ fill:var(--kv); opacity:0.08; }
+  .trend-dot{ fill:var(--surface); stroke:var(--kv); stroke-width:2; }
+  .trend-dot.cur{ fill:var(--kv); }
+  .trend-grid{ stroke:var(--grid); stroke-width:1; }
+  .trend-crosshair{ stroke:var(--muted); stroke-width:1; stroke-dasharray:3,3; opacity:0; pointer-events:none; }
+  #trendTooltip{
+    position:absolute; pointer-events:none; background:var(--surface); border:1px solid var(--border);
+    border-radius:6px; padding:6px 10px; font-size:11.5px; font-family:"IBM Plex Mono", monospace;
+    box-shadow:0 4px 14px rgba(0,0,0,0.18); opacity:0; transition:opacity .1s ease; white-space:nowrap; z-index:5;
+  }
+  #trendWrap{ position:relative; }
+</style>
+
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <p class="eyebrow">Operation Excellence — First Mile</p>
+      <h1>Weekly Warp Speed</h1>
+    </div>
+    <div class="weekctl">
+      <div class="weekctl-row">
+        <label for="weekSelect">Viewing week</label>
+        <select id="weekSelect"></select>
+      </div>
+      <div class="compared">Compared against <b id="prevWeekLabel"></b></div>
+    </div>
+  </header>
+
+  <div class="banner" id="dqBanner" hidden>
+    <div class="dot"></div>
+    <div><b>Data quality flag —</b> <span id="dqText"></span> Verify the source export covers that day fully before this total is finalized for management.</div>
+  </div>
+
+  <div class="kpi-grid" id="kpiStrip"></div>
+
+  <section class="grid2">
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">Weekly Trend — Total Breaches</div>
+          <div class="panel-sub">First Mile, all categories combined</div>
+        </div>
+      </div>
+      <div id="trendWrap">
+        <svg id="trendSvg" viewBox="0 0 600 220" style="width:100%;height:auto;overflow:visible;"></svg>
+        <div id="trendTooltip"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">All Weeks Loaded</div>
+          <div class="panel-sub">Grand totals, week-over-week</div>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table class="data" id="weekTotalsTable">
+          <thead><tr><th>Week</th><th class="n">Total</th><th class="n">WoW</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">Breach Categories — Ranked</div>
+          <div class="panel-sub">Share of week total · click a row for the hub / driver breakdown behind it</div>
+        </div>
+      </div>
+      <ul class="taglist" id="categoryList"></ul>
+    </div>
+  </section>
+
+  <section class="grid2">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Top 10 Shippers</div>
+        <div class="panel-sub">By breach count, viewed week</div>
+      </div>
+      <div class="table-scroll">
+        <table class="data" id="shipperTable"><thead><tr><th>Shipper</th><th class="n">Breaches</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Top 10 Origin → Destination Pairs</div>
+        <div class="panel-sub">By region, viewed week</div>
+      </div>
+      <div class="table-scroll">
+        <table class="data" id="odTable"><thead><tr><th>OD Pair</th><th class="n">Breaches</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid2">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Top 10 Drop Points</div>
+        <div class="panel-sub">By name, blanks excluded</div>
+      </div>
+      <div class="table-scroll">
+        <table class="data" id="dpTable"><thead><tr><th>DP Name</th><th class="n">Breaches</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">Top 10 Drivers — Late POH</div>
+          <div class="panel-sub">KV + NKV combined · flagged where one day drives the total</div>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table class="data" id="pohTable"><thead><tr><th>Driver</th><th class="n">Breaches</th><th>Busiest day</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">Add Next Week's Export</div>
+          <div class="panel-sub">CSV with <code class="num">first_attempt_date</code>, <code class="num">sub_breach_dept</code> and the other source columns · parsed in your browser, nothing uploaded</div>
+        </div>
+      </div>
+      <div class="upload-zone" id="uploadZone">
+        <div><b>Drop CSV file(s) here</b>, or click to browse.</div>
+        <div style="margin-top:4px;">Rows are auto-assigned to their week from <code class="num">first_attempt_date</code> and merged into the picker above.</div>
+      </div>
+      <input type="file" id="fileInput" accept=".csv" multiple hidden>
+      <div class="upload-status" id="uploadStatus"></div>
+    </div>
+  </section>
+
+  <footer>
+    Week runs Monday–Sunday, assigned by <code>first_attempt_date</code> (not <code>oc_date</code> — verified against known pivot totals; the raw export's date format has varied week to week — both "16-Sep-26" and "20/08/2026" style are handled). Fixed set of 8 categories from <code>sub_breach_dept</code>. Category-level detail (hub/driver/shipper breakdown) is available from W34 onward, seeded from the raw per-row exports — every weekly total matched the previously verified pivot totals exactly; W32–W33 carry verified grand totals only, so their category rows and WoW read "—". <b>Quick win</b> = one hub is ≥50% of that category's volume · <b>Partial fix</b> = 30–50% · <b>Multi-cause</b> = spread across hubs, no single fix. Figures are exact counts from the source file, not estimates — no cause is inferred for any drop or spike; flagged numbers are for the Pickup Manager to investigate. If a weekly export has the Driver name and Dp name columns swapped (as W40's did), it is detected and corrected automatically. Uploaded files are parsed locally in this browser tab only — nothing syncs across viewers yet.
+  </footer>
+
+</div>
+
+<script>
+(function(){
+
+// ---------- Seed data ----------
+// Grand totals only (verified against pivots) for the two weeks before raw exports existed.
+const SEED_TOTALS = {
+  32: { label: "W32 (3–9 Aug)", total: 29492 },
+  33: { label: "W33 (10–16 Aug)", total: 26683 }
+};
+
+// Category-level detail for each week, computed from the raw per-row exports.
+// W34-W37 verified: grand totals match the previously recorded pivot totals exactly.
+const DETAIL_WEEKS = {
+  34: {"total":21587,"categories":{"KV late DP pickup":5732,"KV late pickup":2879,"KV late poh":1363,"NKV late DP pickup":666,"NKV late pickup":5727,"NKV late poh":5220,"DP dropoff on PH":0,"outlier":0},"catHubs":{"KV late DP pickup":[["PUDO-KV-DEL",3452],["ASN FM KV",993],["PUDO KV",521],["D4-BTK-2-128",413],["MM-MM",150],["D4-SRD-4-126",84],["D1-SLG-18-94",50],["D1-CKT-20-92",18]],"KV late pickup":[["D2-SHA-14-103",1485],["PUDO KV",1245],["D3-KSR-10-110",57],["D2-BTR-14-105",29],["PUDO-KV-DEL",28],["D3-BAN-6-122",11],["D4-STG-4-124",11],["D3-PKL-10-113",5]],"KV late poh":[["PUDO-KV-DEL",695],["PUDO KV",564],["ASN FM KV",102],["D2-SHA-14-103",1],["D3-SYH-6-119",1]],"NKV late DP pickup":[["ASN FM Perak",136],["ASN FM Negeri Sembilan",110],["ASN FM Kedah",94],["PUDO Johor",75],["ASN FM Johor",57],["ASN FM Penang",53],["PUDO Negeri Sembilan",36],["PUDO Penang",32]],"NKV late pickup":[["PUDO Penang",5533],["ASN FM Johor",102],["PUDO Sarawak",27],["E4-MYY-1-150",17],["C1-TGI-17-57",12],["C1-PWR-17-58",10],["ASN FM Melaka",7],["PUDO Kedah",7]],"NKV late poh":[["PUDO Penang",2561],["ASN FM Negeri Sembilan",1126],["ASN FM Johor",577],["PUDO Johor",410],["ASN FM Melaka",402],["ASN FM Kelantan",58],["ASN FM Terengganu",33],["PUDO Kedah",22]],"DP dropoff on PH":[],"outlier":[]},"catDrivers":{"KV late DP pickup":[["ASNP - Ninja Van at The Nest Setapak",403],["KV1 - FM - Syafiq Sarwani",295],["KV6 - FM - Haziq Muhaimin",292],["BTK - ID - LORRETA LINDA",276],["KV2 - FM - SUB DC Serdang",212],["KV1 - FM - Amirul Asyaraf",171],["ASN FM - Ninja Van at Kajang",167],["ASNP - Ninja Van at Jenjarom Dua",159]],"KV late pickup":[["SHA - ID - MERIAM",1377],["KV - IMP - LEX - Afif Omar",789],["KV - IMP - ZAL - Izman Jais",264],["KV - IMP - SKV - Hilman Nudin",172],["KSR - ID - AZRI",51],["SHA - ID - AZMAN",46],["SHA - ID - SALIHIN",45],["BTR - ID - KHAIRAN",29]],"KV late poh":[["KV - FM - Aidil Zakaria",341],["KV - FM - Saiful Amri",274],["KV2 - FM - Zulfikri Puasa",190],["KV3 - FM - SUB PRO Panparasu",115],["KV4 - FM - Razni Rasman",100],["ASN FM - Ninja Van at Selayang",93],["KV2 - IMP - Hisham Nazari",70],["KV6 - FM - Paudi Hatta",67]],"NKV late DP pickup":[["ASN FM - Ninja Van at Denai Alam Dua",126],["ASN FM - Ninja Van at Sendayan Nilai",108],["ASN FM - Ninja Van at Simpang Empat Kedah (AOB)",45],["ASN FM - Ninja Van at Bayan Lepas",39],["ASN FM - Ninja Van at Simpang Empat Kedah (SME)",35],["ASN FM - Ninja Van at Nusajaya",29],["SWG - FM - Haziq Sharim",27],["ASN FM - Ninja Van at Denai Alam (PSG)",19]],"NKV late pickup":[["GEO - FM - Zaiyani Azly",4979],["SIM - FM - Nadzim Hairi",403],["SIM - FM - SUB PRO BUKIT MINYAK",131],["ASN FM - Ninja Van at Denai Alam (PSG)",102],["FM - EM2 - Shazwan Afiq",27],["GEO - FM - Jamal Zahari",20],["MYY - ID - DINO",15],["TGI - ID - AIMAN",12]],"NKV late poh":[["GEO - FM - Zaiyani Azly",1402],["ASN FM - Ninja Van at Sendayan Nilai",1124],["SIM - FM - Nadzim Hairi",498],["ASN FM - Ninja Van at Melaka Raya (AYK)",402],["SIM - FM - NOOR FAIZAL",393],["ASNP - Ninja Van at Kempas Utama",330],["PSG - FM - AMIRUL HAKIM",220],["ASN FM - Ninja Van at Denai Alam (PSG)",219]],"DP dropoff on PH":[],"outlier":[]},"topShippers":[["TiktokMY (ELGINI MALAYSIA)",6381],["TiktokMY (Panda eyes)",1376],["DELYVA (BLINK BOOK SDN BHD)",939],["(RSPB2B) Packxpert Sdn Bhd",399],["NUNU APPAREL",303],["(RSPB2B MPS) MFORCE PARTS SDN BHD",270],["Lazada (KLP Sort Centre)",263],["Zalora Malaysia",221],["TiktokMY (GMEELAN.Malaysia)",210],["Zalora (H&M)",196]],"topODPairs":[["Selangor > Selangor",4291],["Pulau Pinang > Johor",3133],["Pulau Pinang > Selangor",1926],["Pulau Pinang > Pahang",1336],["Selangor > Kuala Lumpur",1300],["Selangor > Johor",956],["Selangor > Kedah",610],["Pulau Pinang > Kuala Lumpur",548],["Selangor > Pulau Pinang",471],["Selangor > Kelantan",447]],"topDPNames":[["ASNP - Ninja Van at The Nest Setapak",364],["Kpy Maju at Bandar Putera 2",280],["Ada Engineering at Bandar Parklands Klang",276],["MBE at Olive Hill Business Park",225],["Ninja Self Owned Store Cyberjaya",165],["Ninja Self Owned Store Putra Heights",165],["ASNP - Ninja Van at Jenjarom",159],["MBE at Kajang Reko",146],["4PL - Parcelhub at Bangi Seksyen 15",129],["Ninja Self Owned Store TSB Sungai Buloh",127]],"topPOHDrivers":[["GEO - FM - Zaiyani Azly",1402,"23-Aug",681],["ASN FM - Ninja Van at Sendayan Nilai",1124,"21-Aug",942],["SIM - FM - Nadzim Hairi",498,"19-Aug",179],["ASN FM - Ninja Van at Melaka Raya (AYK)",402,"21-Aug",106],["SIM - FM - NOOR FAIZAL",393,"17-Aug",373],["KV - FM - Aidil Zakaria",341,"21-Aug",312],["ASNP - Ninja Van at Kempas Utama",330,"19-Aug",180],["KV - FM - Saiful Amri",274,"21-Aug",111],["PSG - FM - AMIRUL HAKIM",220,"19-Aug",100],["ASN FM - Ninja Van at Denai Alam (PSG)",219,"22-Aug",44]],"dailyCounts":[["17-Aug",2364],["18-Aug",4166],["19-Aug",4159],["20-Aug",2913],["21-Aug",3961],["22-Aug",2121],["23-Aug",1903]]},
+  35: {"total":22023,"categories":{"KV late DP pickup":7143,"KV late pickup":3584,"KV late poh":1355,"NKV late DP pickup":511,"NKV late pickup":5821,"NKV late poh":3551,"DP dropoff on PH":56,"outlier":2},"catHubs":{"KV late DP pickup":[["PUDO-KV-DEL",4362],["ASN FM KV",1301],["PUDO KV",809],["MM-MM",283],["D4-BTK-2-128",269],["D1-CKT-20-92",37],["D4-SRD-4-126",20],["D2-BTR-14-105",17]],"KV late pickup":[["D2-SHA-14-103",2216],["PUDO KV",1000],["D3-PKL-10-113",180],["D3-KSR-10-110",61],["D2-BTR-14-105",49],["D4-STG-4-124",26],["MM-MM",22],["D2-PUC-14-104",12]],"KV late poh":[["PUDO KV",701],["PUDO-KV-DEL",451],["ASN FM KV",202],["D3-SYH-6-119",1]],"NKV late DP pickup":[["ASN FM Johor",87],["ASN FM Kedah",80],["JHB-JHB",59],["PUDO Penang",52],["PUDO Johor",51],["ASN FM Kelantan",41],["ASN FM Penang",28],["ASN FM Perak",27]],"NKV late pickup":[["PUDO Penang",5332],["ASN FM Johor",356],["ASN FM Melaka",49],["PUDO Kedah",25],["JHB-JHB",12],["PUDO Sarawak",12],["E4-MYY-1-150",10],["C1-TGI-17-57",6]],"NKV late poh":[["PUDO Penang",1933],["ASN FM Melaka",468],["ASN FM Negeri Sembilan",410],["ASN FM Johor",310],["ASN FM Kelantan",164],["PUDO Johor",162],["PUDO Perak",51],["PUDO Kedah",38]],"DP dropoff on PH":[["PUDO KV",25],["PUDO-KV-DEL",23],["ASN FM KV",5],["PUDO Penang",1],["ASN FM Negeri Sembilan",1],["MM-MM",1]],"outlier":[["C3-MTG-7-78",1],["B2-FLM-25-44",1]]},"catDrivers":{"KV late DP pickup":[["ASN FM - Ninja Van at Denai Alam Dua",611],["KV5 - FM - Amin Khamis",520],["KV1 - FM - SUB PRO VINOD",432],["KV3 - FM - Syahmi Sharum",339],["BTK - ID - KALA",224],["KV6 - FM - Syazwan Sopi",204],["KV4 - FM - Khairi Hasan",190],["KV2 - FM - Bahron Kadir",172]],"KV late pickup":[["SHA - ID - MERIAM",1293],["KV - IMP - ZAL - Izman Jais",444],["SHA - ID - KAMARUDDIN",439],["SHA - ID - NOOR IDAYU",369],["KV - IMP - LEX - Afif Omar",347],["PKL - ID - MUHAMMAD SYAZWAN",180],["KV - IMP - SKV - Hilman Nudin",149],["SHA - ID - SALIHIN",113]],"KV late poh":[["KV6 - FM - Paudi Hatta",299],["KV2 - FM - Fandi Wak Syaaroni",274],["ASN FM - Ninja Van at Selayang",202],["KV3 - FM - SUB PRO Panparasu",179],["KV5 - FM - Nik Iskandar",89],["KV1 - FM - Syafiq Sarwani",80],["KV - FM - Nazrul Arif",72],["KV1 - FM - Syamimi Athirah",53]],"NKV late DP pickup":[["ASN FM - Ninja Van at Denai Alam (PSG)",68],["ASN FM - Ninja Van at Simpang Empat Kedah (SME)",46],["ASN FM - Ninja Van at Bayan Lepas",27],["KLU - FM - Mohd Ashik",25],["GEO - FM - Afiq Ismadi",21],["ASN FM - Ninja Van at Simpang Empat Kedah (AOB)",20],["ASN FM - Ninja Van at Denai Alam (WCY)",20],["GEO - FM - Zaiyani Azly",19]],"NKV late pickup":[["GEO - FM - Zaiyani Azly",5173],["ASN FM - Ninja Van at Denai Alam (PSG)",368],["SIM - FM - Nadzim Hairi",102],["SIM - FM - NOOR FAIZAL",55],["ASN FM - Ninja Van at Melaka Raya (AYK)",49],["SPT - FM - Mohamad Syamir",25],["FM - EM2 - Shazwan Afiq",12],["PMP - ID - CHRIST EDWARD",6]],"NKV late poh":[["GEO - FM - Zaiyani Azly",806],["SIM - FM - NOOR FAIZAL",577],["SIM - FM - Nadzim Hairi",465],["ASN FM - Ninja Van at Sendayan Nilai",393],["ASN FM - Ninja Van at Melaka Raya (AYK)",307],["ASN FM - Ninja Van at Denai Alam (PSG)",165],["ASNP - Ninja Van at Berek 12",144],["ASNP - Ninja Van at Kempas Utama",127]],"DP dropoff on PH":[["KV1 - FM - SUB PRO VINOD",25],["KV5 - FM - Mazli Khairuddin",6],["KV4 - FM - Khairi Hasan",5],["ASN FM - Ninja Van at Denai Alam Dua",4],["KV1 - FM - Muaiz Hafifi",3],["KV6 - FM - Haziq Muhaimin",2],["KV5 - FM - Amin Khamis",2],["KV2 - FM - Nazrin Rozman",1]],"outlier":[["ASN FM - Ninja Van at Melaka Raya (AYK)",1],["FLM - FM - Syafiq Shahidzal",1]]},"topShippers":[["TiktokMY (ELGINI MALAYSIA)",5979],["TiktokMY (Panda eyes)",1293],["TiktokMY (SIMPLYSITI)",738],["TAISHIN GROUP SDN BHD",434],["TYCOON IM SDN BHD",395],["TiktokMY (ADVO)",371],["Zalora (H&M)",305],["NUNU APPAREL",303],["Zalora Malaysia",267],["DELYVA (BLINK BOOK SDN BHD)",258]],"topODPairs":[["Selangor > Selangor",4902],["Pulau Pinang > Johor",2894],["Pulau Pinang > Selangor",1524],["Selangor > Kuala Lumpur",1518],["Pulau Pinang > Pahang",1404],["Selangor > Johor",1027],["Selangor > Kedah",729],["Selangor > Pulau Pinang",695],["Selangor > Kelantan",622],["Selangor > Pahang",617]],"topDPNames":[["ParcelHub at Uptown Puchong",405],["4PL - MBE at Dataran Suria @ Puncak Alam",395],["Collectco Laeight Safety Solutions at Bandar Pinggiran Subang",254],["MBE at Kompleks Kenanga Wholesale City",243],["AM Hub at Subang Pelangi Selangor",238],["Just Drop at Pelabuhan Klang",224],["ParcelHub at Pavilion Bukit Jalil",174],["4PL - CollectCo at Jalan SP5",164],["Spdy Express at Rawang Mutiara",160],["MBE at Eco Majestic",153]],"topPOHDrivers":[["GEO - FM - Zaiyani Azly",806,"30-Aug",566],["SIM - FM - NOOR FAIZAL",577,"26-Aug",168],["SIM - FM - Nadzim Hairi",465,"26-Aug",123],["ASN FM - Ninja Van at Sendayan Nilai",393,"29-Aug",311],["ASN FM - Ninja Van at Melaka Raya (AYK)",307,"28-Aug",135],["KV6 - FM - Paudi Hatta",299,"28-Aug",145],["KV2 - FM - Fandi Wak Syaaroni",274,"30-Aug",220],["ASN FM - Ninja Van at Selayang",202,"28-Aug",146],["KV3 - FM - SUB PRO Panparasu",179,"24-Aug",93],["ASN FM - Ninja Van at Denai Alam (PSG)",165,"24-Aug",63]],"dailyCounts":[["24-Aug",2194],["25-Aug",2542],["26-Aug",2834],["27-Aug",4208],["28-Aug",3825],["29-Aug",3595],["30-Aug",2825]]},
+  36: {"total":24524,"categories":{"KV late DP pickup":6185,"KV late pickup":1371,"KV late poh":1584,"NKV late DP pickup":1212,"NKV late pickup":7304,"NKV late poh":6789,"DP dropoff on PH":79,"outlier":0},"catHubs":{"KV late DP pickup":[["PUDO-KV-DEL",3140],["ASN FM KV",1891],["D4-BTK-2-128",369],["PUDO KV",364],["MM-MM",313],["D4-SRD-4-126",36],["D1-BMC-16-98",33],["D1-CKT-20-92",14]],"KV late pickup":[["PUDO KV",836],["D3-PKL-10-113",158],["D1-CKT-20-92",155],["D4-SZB-2-127",96],["D3-KSR-10-110",68],["D2-SHA-14-103",17],["D4-STG-4-124",9],["D3-BAN-6-122",8]],"KV late poh":[["PUDO-KV-DEL",1284],["PUDO KV",270],["D3-SYH-6-119",16],["ASN FM KV",13],["D1-WMJ-22-88",1]],"NKV late DP pickup":[["PUDO Penang",557],["ASN FM Penang",182],["PUDO Johor",134],["ASN FM Negeri Sembilan",106],["ASN FM Kedah",65],["ASN FM Kelantan",46],["ASN FM Melaka",33],["ASN FM Johor",23]],"NKV late pickup":[["PUDO Penang",6738],["ASN FM Johor",316],["ASN FM Melaka",77],["E3-BKW-1-149",34],["PUDO Kedah",25],["PEN-PEN",17],["YPG-YPG",14],["PUDO Johor",13]],"NKV late poh":[["PUDO Penang",2054],["ASN FM Melaka",1240],["PUDO Johor",906],["ASN FM Perak",874],["ASN FM Negeri Sembilan",648],["PUDO Negeri Sembilan",507],["ASN FM Johor",352],["ASN FM Kelantan",140]],"DP dropoff on PH":[["PUDO-KV-DEL",34],["ASN FM KV",27],["MM-MM",9],["PUDO Negeri Sembilan",3],["D4-BTK-2-128",2],["ASN FM Johor",2],["PUDO Pahang",1],["D4-SRD-4-126",1]],"outlier":[]},"catDrivers":{"KV late DP pickup":[["ASN FM - Ninja Van at Pandan Cahaya",1301],["BTK - ID - KALA",332],["KV6 - FM - Syazwan Sopi",226],["KV1 - FM - Haziq Abu Bakar",193],["KV5 - FM - Amin Khamis",187],["ASN FM - Ninja Van at Selayang",176],["KV3 - FM - Syahmi Sharum",167],["KV5 - FM - Ashabul Samsul",147]],"KV late pickup":[["KV - IMP - SKV - Hilman Nudin",453],["KV - IMP - LEX - Afif Omar",320],["PKL - ID - MUHAMMAD SYAZWAN",158],["CKT - ID - SYAMIMI",136],["SZB - ID - MIZAR",96],["KSR - ID - AZRI",68],["KV - IMP - ZAL - Izman Jais",53],["CKT - ID - NADIA",19]],"KV late poh":[["KV1 - FM - Syamimi Athirah",441],["KV1 - FM - Syafiq Sarwani",297],["KV2 - FM - Fandi Wak Syaaroni",177],["KV1- FM - Aniq Hafiz",135],["KV4 - FM - Fakrull Aqil",110],["KV6 - FM - Paudi Hatta",101],["KV1 - FM - Rizal Saleh",72],["KV3 - FM - Fitri Fizzani",66]],"NKV late DP pickup":[["SIM - FM - NOOR FAIZAL",429],["ASNP - Ninja Van at Bukit Tengah Dua",176],["ASN FM - Ninja Van at Sendayan Nilai",99],["SIM - FM - Aiman Farikh",82],["ASN FM - Ninja Van at Simpang Empat Kedah (SME)",52],["NSJ - FM - Azzharul Syafiq",39],["KLU - FM - Mohd Ashik",35],["ASN FM - Ninja Van at Gua Musang (TMPA)",35]],"NKV late pickup":[["GEO - FM - Zaiyani Azly",6472],["ASN FM - Ninja Van at Denai Alam (PSG)",314],["SIM - FM - NOOR FAIZAL",279],["ASN FM - Ninja Van at Melaka Raya (AYK)",76],["BKW - ID - ASLAHUDDIN",34],["BAL - FM - Mohd Azri",25],["ASNP - Ecy Courier Service",16],["KLU - FM - MUHAMMAD FAIZIN",13]],"NKV late poh":[["ASN FM - Ninja Van at Melaka Raya (AYK)",1052],["ASN FM - Ninja Vant at Ipoh (BTGD)",870],["SIM - FM - Nadzim Hairi",686],["SIM - FM - NOOR FAIZAL",685],["ASN FM - Ninja Van at Sendayan Nilai",548],["SWG - FM - Muhammad Nurhafizuddin",507],["BPT - FM - Faiq",441],["GEO - FM - Zaiyani Azly",257]],"DP dropoff on PH":[["ASNP - Ninja Van at The Nest Setapak",27],["KV6 - FM - Syazwan Sopi",22],["KV3 - FM - Fitri Fizzani",6],["KV2 - FM - Dani Ghazali",3],["SWG - FM - Muhammad Shareez",3],["BTK - ID - MOHAMAD AZMI",2],["KV3 - FM - Zulkifli Tajuddin",1],["KUA - FM - Syamim Makhyudin",1]],"outlier":[]},"topShippers":[["TiktokMY (ELGINI MALAYSIA)",6729],["Ninja Self Owned Store Pandan Indah - 24427",1132],["TiktokMY (MydoraGold)",528],["NUNU APPAREL",478],["TAISHIN GROUP SDN BHD",444],["TiktokMY (Dr Settle Malaysia)",415],["TiktokMY (Diamond Coating HQ Malaysia)",407],["(RSPFS) BUBBLES O2 MARKETING SDN. BHD.",402],["(RSPB2B MPS) Soar 21 Enterprise",398],["DELYVA (BLINK BOOK SDN BHD)",369]],"topODPairs":[["Pulau Pinang > Selangor",3236],["Selangor > Selangor",3092],["Pulau Pinang > Johor",2408],["Selangor > Johor",1783],["Pulau Pinang > Kuala Lumpur",1109],["Selangor > Kuala Lumpur",1056],["Pulau Pinang > Pahang",974],["Johor > Selangor",622],["Pulau Pinang > Negeri Sembilan",540],["Pulau Pinang > Melaka",519]],"topDPNames":[["Ninja Self Owned Store Pandan Indah",1132],["99 Pos Express Service Centre at Bukit Mertajam",539],["Ninja Self Owned Store Cyberjaya",333],["Just Drop at Pelabuhan Klang",332],["ASNP - Ninja Van at Taman Delima Banting",217],["Best Express at Seksyen 10 Kawasan Perusahaan Bangi",193],["Dr Xpress at Selayang Indah",167],["4PL - CollectCo at Bukit Raja",141],["ASNP - Ninja Van at Jenjarom",118],["Riang Gemilang Enterprise At Taman Sejahtera Kuala Lumpur",113]],"topPOHDrivers":[["ASN FM - Ninja Van at Melaka Raya (AYK)",1052,"03-Sep",360],["ASN FM - Ninja Vant at Ipoh (BTGD)",870,"04-Sep",717],["SIM - FM - Nadzim Hairi",686,"03-Sep",278],["SIM - FM - NOOR FAIZAL",685,"05-Sep",254],["ASN FM - Ninja Van at Sendayan Nilai",548,"01-Sep",390],["SWG - FM - Muhammad Nurhafizuddin",507,"03-Sep",477],["KV1 - FM - Syamimi Athirah",441,"04-Sep",330],["BPT - FM - Faiq",441,"03-Sep",246],["KV1 - FM - Syafiq Sarwani",297,"03-Sep",230],["GEO - FM - Zaiyani Azly",257,"01-Sep",219]],"dailyCounts":[["31-Aug",12],["01-Sep",2147],["02-Sep",1940],["03-Sep",5269],["04-Sep",8138],["05-Sep",4916],["06-Sep",2102]]},
+  37: {"total":26756,"categories":{"KV late DP pickup":6795,"KV late pickup":2737,"KV late poh":1993,"NKV late DP pickup":1137,"NKV late pickup":9269,"NKV late poh":4824,"DP dropoff on PH":1,"outlier":0},"catHubs":{"KV late DP pickup":[["PUDO-KV-DEL",3983],["PUDO KV",909],["MM-MM",735],["ASN FM KV",687],["D4-BTK-2-128",266],["D2-BTR-14-105",80],["D1-CHE-18-96",48],["D4-SRD-4-126",24]],"KV late pickup":[["PUDO KV",1447],["D2-SHA-14-103",812],["PUDO-KV-DEL",194],["D4-STG-4-124",72],["ASN FM KV",71],["D3-KSR-10-110",50],["D3-PKL-10-113",46],["D3-KAJ-6-121",13]],"KV late poh":[["PUDO-KV-DEL",803],["PUDO KV",704],["ASN FM KV",459],["MM-RTS",20],["D3-SYH-6-119",7]],"NKV late DP pickup":[["PUDO Penang",437],["ASN FM Penang",241],["PUDO Johor",115],["ASN FM Kedah",82],["ASN FM Negeri Sembilan",64],["ASN FM Johor",50],["ASN FM Kelantan",42],["ASN FM Melaka",28]],"NKV late pickup":[["PUDO Penang",8602],["ASN FM Johor",378],["PUDO Johor",50],["E3-BKW-1-149",43],["C1-PWR-17-58",41],["C1-TGI-17-57",35],["ASN FM Melaka",34],["PUDO Sarawak",32]],"NKV late poh":[["PUDO Penang",2018],["ASN FM Negeri Sembilan",730],["ASN FM Melaka",619],["PUDO Johor",470],["ASN FM Johor",442],["ASN FM Perak",338],["PUDO Perak",80],["ASN FM Kelantan",74]],"DP dropoff on PH":[["ASN FM KV",1]],"outlier":[]},"catDrivers":{"KV late DP pickup":[["KV2 - FM - Hazwan Mokhtar",476],["KV2 - FM - SUB DC Ampang",450],["KV - FM - Fahmy Ikram",371],["KV6 - FM - Syazwan Sopi",264],["ASN FM - Ninja Van at Denai Alam Dua",223],["BTK - ID - KALA",205],["KV2 - FM - Bahron Kadir",179],["KV4 - FM - Johan Reza",178]],"KV late pickup":[["SHA - ID - MERIAM",812],["KV - IMP - LEX - Afif Omar",656],["KV - IMP - ZAL - Izman Jais",512],["KV - IMP - SKV - Hilman Nudin",207],["KV4 - FM- Amirul Azmin",113],["ASN FM - Ninja Van at Selayang",71],["STG - ID - MUHAMMAD ROSLI",64],["KV3 - FM - Aizat Razali",55]],"KV late poh":[["KV2 - FM - Fandi Wak Syaaroni",408],["ASN FM - Ninja Van at Selayang",303],["KV6 - IMP - Afiq Farhan",205],["KV3 - FM - Aizat Razali",198],["ASNP - Ninja Van at Seksyen 23 Shah Alam",175],["KV3 - FM - Azuan Khaidir",114],["KV3 - FM - Reduan Rasid",106],["KV4 - FM - Razni Rasman",71]],"NKV late DP pickup":[["BWH - FM - Aizad Annuar",303],["ASNP - Ninja Van at Bukit Tengah Dua",224],["ASN FM - Ninja Van at Simpang Empat Kedah (SME)",65],["ASN FM - Ninja Van at Sendayan Nilai",50],["GEO - FM - Afiq Ismadi",44],["ASN FM - Ninja Van at Denai Alam (PSG)",39],["ASN FM - Ninja Van at Gua Musang (TMPA)",35],["KLU - FM - MUHAMMAD FAIZIN",33]],"NKV late pickup":[["GEO - FM - Zaiyani Azly",8571],["ASN FM - Ninja Van at Denai Alam (PSG)",378],["BKW - ID - ASLAHUDDIN",43],["PSG - FM - Muhamamad Zahierudin",43],["PWR - ID - ANAS",41],["ASN FM - Ninja Van at Melaka Raya (AYK)",34],["TGI - ID - AIMAN",33],["FM - EM2 - Shazwan Afiq",32]],"NKV late poh":[["SIM - FM - Nadzim Hairi",768],["ASN FM - Ninja Van at Sendayan Nilai",728],["ASN FM - Ninja Van at Melaka Raya (AYK)",619],["SPT - FM - Muhamad Rashid",476],["SIM - FM - NOOR FAIZAL",463],["ASN FM - Ninja Vant at Ipoh (BTGD)",332],["ASN FM - Ninja Van at Denai Alam (PSG)",264],["MUA - FM - Muhammad Azri Zaris",145]],"DP dropoff on PH":[["ASNP - Ninja Van at The Nest Setapak",1]],"outlier":[]},"topShippers":[["TiktokMY (ELGINI MALAYSIA)",8568],["TiktokMY (Panda eyes)",812],["NUNU APPAREL",503],["TiktokMY (MydoraGold)",449],["AFG 24 RESOURCES",369],["Zalora Malaysia",366],["Lazada (KLP Sort Centre)",358],["DELYVA (BLINK BOOK SDN BHD)",354],["TAISHIN GROUP SDN BHD",345],["Zalora (H&M)",314]],"topODPairs":[["Selangor > Selangor",4543],["Pulau Pinang > Selangor",3408],["Pulau Pinang > Johor",3307],["Selangor > Kuala Lumpur",1525],["Pulau Pinang > Pahang",1243],["Pulau Pinang > Kuala Lumpur",1132],["Selangor > Johor",1038],["Pulau Pinang > Negeri Sembilan",676],["Selangor > Kedah",670],["Pulau Pinang > Sabah",618]],"topDPNames":[["MBE at Kompleks Kenanga Wholesale City",641],["99 Pos Express Service Centre at Bukit Mertajam",500],["CLS EXPRESS at Seri Kembangan",441],["Dr Xpress at Selayang Indah",370],["Just Drop at Pelabuhan Klang",205],["ASNP - Ninja Van at Taman Delima Banting",186],["ASNP - Ninja Van at Jenjarom",172],["Pantas Network at Kenanga Wholesale City",164],["AM Hub at Subang Pelangi Selangor",141],["Spdy Express at Rawang Mutiara",140]],"topPOHDrivers":[["SIM - FM - Nadzim Hairi",768,"09-Sep",208],["ASN FM - Ninja Van at Sendayan Nilai",728,"13-Sep",375],["ASN FM - Ninja Van at Melaka Raya (AYK)",619,"09-Sep",197],["SPT - FM - Muhamad Rashid",476,"07-Sep",364],["SIM - FM - NOOR FAIZAL",463,"13-Sep",216],["KV2 - FM - Fandi Wak Syaaroni",408,"12-Sep",204],["ASN FM - Ninja Vant at Ipoh (BTGD)",332,"09-Sep",281],["ASN FM - Ninja Van at Selayang",303,"13-Sep",274],["ASN FM - Ninja Van at Denai Alam (PSG)",264,"13-Sep",95],["KV6 - IMP - Afiq Farhan",205,"10-Sep",115]],"dailyCounts":[["07-Sep",2715],["08-Sep",3900],["09-Sep",4914],["10-Sep",3032],["11-Sep",5986],["12-Sep",3273],["13-Sep",2936]]},
+  38: {"total":18744,"categories":{"KV late DP pickup":5770,"KV late pickup":2908,"KV late poh":1028,"NKV late DP pickup":771,"NKV late pickup":2576,"NKV late poh":5646,"DP dropoff on PH":44,"outlier":1},"catHubs":{"KV late DP pickup":[["PUDO-KV-DEL",2691],["ASN FM KV",1454],["PUDO KV",912],["D4-BTK-2-128",262],["MM-MM",250],["D2-BTR-14-105",103],["D1-BMC-16-98",42],["D3-KKB-8-116",25]],"KV late pickup":[["PUDO KV",1655],["D2-SHA-14-103",1028],["D3-KSR-10-110",60],["ASN FM KV",46],["D4-STG-4-124",41],["D2-DSA-12-107",26],["PUDO-KV-DEL",20],["D3-KAJ-6-121",16]],"KV late poh":[["PUDO-KV-DEL",432],["PUDO KV",339],["ASN FM KV",249],["D3-PKL-10-113",6],["D3-BAN-6-122",2]],"NKV late DP pickup":[["ASN FM Kedah",179],["PUDO Johor",161],["ASN FM Perak",102],["ASN FM Negeri Sembilan",78],["PUDO Penang",35],["ASN FM Johor",34],["JHB-JHB",33],["PUDO Perak",30]],"NKV late pickup":[["PUDO Penang",2123],["ASN FM Johor",301],["PUDO Sarawak",39],["CC-TGG",30],["C1-TGI-17-57",21],["C1-PWR-17-58",17],["ASN FM Melaka",10],["ASN FM Perak",7]],"NKV late poh":[["PUDO Penang",1479],["ASN FM Negeri Sembilan",1032],["PUDO Negeri Sembilan",899],["ASN FM Perak",870],["PUDO Johor",475],["ASN FM Melaka",407],["ASN FM Johor",351],["ASN FM Kelantan",111]],"DP dropoff on PH":[["MM-MM",34],["PUDO-KV-DEL",9],["D1-RBY-20-90",1]],"outlier":[["C2-SGT-11-71",1]]},"catDrivers":{"KV late DP pickup":[["ASN FM - Ninja Van at Pandan Cahaya",427],["ASN FM - Ninja Van at Denai Alam Dua",318],["BTK - ID - KALA",243],["ASN FM - Ninja Van at Selayang",209],["KV1 - FM - Muaiz Hafifi",202],["KV5 - FM - Ajwan Bersani",187],["ASNP - Ninja Van at Batang Kali",181],["KV5 - FM - Azmi Hussain",180]],"KV late pickup":[["SHA - ID - MERIAM",1028],["KV - IMP - LEX - Afif Omar",724],["KV - IMP - ZAL - Izman Jais",532],["KV3 - FM - Reduan Rasid",229],["KV - IMP - SKV - Hilman Nudin",162],["KSR - ID - AZRI",60],["ASN FM - Ninja Van at Selayang",46],["STG - ID - MUHAMMAD ROSLI",26]],"KV late poh":[["ASN FM - Ninja Van at Selayang",248],["KV1 - FM - Shahrizal Akhir",230],["KV5 - FM - Azizan Madsarani",224],["KV1 - FM - Syafiq Sarwani",159],["KV6 - IMP - Afiq Farhan",54],["KV3 - FM - Reduan Rasid",41],["KV3 - FM - Izham Hamdan",16],["KV2 - FM - SUB DC Serdang",14]],"NKV late DP pickup":[["ASN FM - Ninja Van at Simpang Empat Kedah (AOB)",108],["ASN FM - Ninja Vant at Ipoh (BTGD)",87],["NSJ - FM - Azzharul Syafiq",83],["ASN FM - Ninja Van at Sendayan Nilai",75],["ASN FM - Ninja Van at Simpang Empat Kedah (SME)",50],["KEM - FM - Azri Abdullah",27],["ASN FM - Ninja Van at Denai Alam (PSG)",21],["KLU - FM - MUHAMMAD FAIZIN",19]],"NKV late pickup":[["GEO - FM - Zaiyani Azly",2087],["ASN FM - Ninja Van at Denai Alam (PSG)",301],["EM2 - FM - Shazwan Afiq",39],["GEO - FM - Jamal Zahari",35],["CC - TGG - DEL - Fuad Zulhilmi",30],["TGI - ID - AIMAN",21],["ASN FM - Ninja Van at Melaka Raya (AYK)",10],["PWR - HD - ANAS",10]],"NKV late poh":[["ASN FM - Ninja Van at Sendayan Nilai",1032],["SWG - FM - Muhammad Nurhafizuddin",899],["ASN FM - Ninja Vant at Ipoh (BTGD)",845],["ASN FM - Ninja Van at Melaka Raya (AYK)",407],["SIM - FM - NOOR FAIZAL",376],["SIM - FM - Nadzim Hairi",297],["GEO - FM - Zaiyani Azly",291],["ASN FM - Ninja Van at Denai Alam (PSG)",243]],"DP dropoff on PH":[["KV1 - FM - Syafiq Sarwani",9]],"outlier":[["SGT - FM - Naim Zaharihudin",1]]},"topShippers":[["TiktokMY (ELGINI MALAYSIA)",2377],["TiktokMY (Panda eyes)",1028],["(RSPFS) BUBBLES O2 MARKETING SDN. BHD.",899],["DELYVA (BLINK BOOK SDN BHD)",675],["TiktokMY (Diamond Coating HQ Malaysia)",523],["TiktokMY (Dr Settle Malaysia)",338],["Zalora (H&M)",336],["Lazada (KLP Sort Centre)",317],["TiktokMY (ADVO)",311],["Ninja Self Owned Store Pandan Indah - 24427",297]],"topODPairs":[["Selangor > Selangor",3690],["Pulau Pinang > Johor",1505],["Selangor > Kuala Lumpur",1228],["Pulau Pinang > Selangor",942],["Selangor > Johor",941],["Selangor > Kedah",713],["Selangor > Perak",601],["Pulau Pinang > Pahang",550],["Selangor > Kelantan",471],["Selangor > Pahang",433]],"topDPNames":[["Ninja Self Owned Store Pandan Indah",297],["Dr Xpress at Selayang Indah",282],["AM Hub at Subang Pelangi Selangor",272],["Just Drop at Pelabuhan Klang",245],["4PL - CollectCo at Dsara Sentral",187],["ASNP - Ninja Van at Batang Kali",177],["Es Parcel at Bandar Seri Botani",157],["MBE at Olive Hill Business Park",145],["ASNP - Ninja Van at Jenjarom",141],["Pantas Network at Kenanga Wholesale City",134]],"topPOHDrivers":[["ASN FM - Ninja Van at Sendayan Nilai",1032,"19-Sep",575],["SWG - FM - Muhammad Nurhafizuddin",899,"20-Sep",899],["ASN FM - Ninja Vant at Ipoh (BTGD)",845,"20-Sep",460],["ASN FM - Ninja Van at Melaka Raya (AYK)",407,"19-Sep",157],["SIM - FM - NOOR FAIZAL",376,"14-Sep",173],["SIM - FM - Nadzim Hairi",297,"19-Sep",107],["GEO - FM - Zaiyani Azly",291,"20-Sep",273],["ASN FM - Ninja Van at Selayang",248,"14-Sep",179],["ASN FM - Ninja Van at Denai Alam (PSG)",243,"14-Sep",106],["KV1 - FM - Shahrizal Akhir",230,"14-Sep",220]],"dailyCounts":[["14-Sep",2562],["15-Sep",3581],["16-Sep",29],["17-Sep",2719],["18-Sep",695],["19-Sep",5262],["20-Sep",3896]]},
+
+  39: {"total":20678,"categories":{"KV late DP pickup":6346,"KV late pickup":2021,"KV late poh":1507,"NKV late DP pickup":606,"NKV late pickup":3393,"NKV late poh":6802,"DP dropoff on PH":3,"outlier":0},"catHubs":{"KV late DP pickup":[["PUDO-KV-DEL",2986],["ASN FM KV",1543],["PUDO KV",1141],["MM-MM",363],["D4-BTK-2-128",124],["D1-BMC-16-98",47],["D1-CKT-20-92",35],["D4-SRD-4-126",32]],"KV late pickup":[["PUDO KV",1650],["D2-SHA-14-103",254],["D3-KSR-10-110",48],["D1-CKT-20-92",38],["D4-STG-4-124",15],["PUDO-KV-DEL",9],["D1-PJY-18-95",6],["D3-CJY-6-120",1]],"KV late poh":[["PUDO-KV-DEL",1250],["ASN FM KV",196],["PUDO KV",60],["D3-BAN-6-122",1]],"NKV late DP pickup":[["PUDO Johor",150],["ASN FM Negeri Sembilan",106],["ASN FM Kedah",102],["ASN FM Kelantan",67],["PUDO Penang",36],["ASN FM Johor",34],["PRK-PRK",29],["ASN FM Perak",20]],"NKV late pickup":[["PUDO Penang",2472],["ASN FM Johor",731],["PUDO Johor",34],["A3-PSN-28-26",34],["E3-BKW-1-149",33],["E3-SBW-1-144",27],["C1-PWR-17-58",17],["E4-MYY-1-150",13]],"NKV late poh":[["PUDO Penang",2837],["ASN FM Negeri Sembilan",1079],["PUDO Johor",822],["PUDO Negeri Sembilan",638],["ASN FM Perak",518],["ASN FM Johor",425],["ASN FM Melaka",410],["ASN FM Kelantan",63]],"DP dropoff on PH":[["ASN FM Johor",2],["PUDO-KV-DEL",1]],"outlier":[]},"catDrivers":{"KV late DP pickup":[["KV2 - FM - SUB DC Ampang",716],["ASN FM - Ninja Van at Denai Alam Dua",367],["KV2 - FM - Dani Ghazali",279],["ASN FM - Ninja Van at Pandan Cahaya",233],["ASN FM - Ninja Van at Denai Alam",211],["ASNP - Ninja Van at Jenjarom Dua",171],["ASN FM - Ninja Van at Kajang",151],["ASN FM - Ninja Van at Selayang",149]],"KV late pickup":[["KV - IMP - LEX - Afif Omar",1070],["KV - IMP - ZAL - Izman Jais",574],["SHA - ID - MERIAM",254],["CKT - ID - NADIA",37],["KSR - ID - AZRI",20],["KSR - ID - ARIF AIMAN",20],["KV1 - FM - Syafiq Sarwani",9],["KSR - ID - ERFAN",8]],"KV late poh":[["KV4 - FM - Razni Rasman",305],["KV3 - FM - Faradilah Dawami",238],["KV2 - FM - Zulfikri Puasa",156],["KV3 - FM - Hafiz Nazri",148],["KV4 - FM - Tarmizi Abdul Aziz",135],["ASN FM - Ninja Van at Selayang",110],["KV1 - IMP - Hisham Nazari",83],["ASN FM - Ninja Van at Denai Alam (SKN)",63]],"NKV late DP pickup":[["ASN FM - Ninja Van at Sendayan Nilai",86],["NSJ - FM - Azzharul Syafiq",68],["ASN FM - Ninja Van at Simpang Empat Kedah (SME)",59],["ASN FM - Ninja Van at Simpang Empat Kedah (AOB)",38],["ASN FM - Ninja Van at Gua Musang",21],["KLU - FM - Mohd Ashik",18],["NSJ - FM - Muhammad Azri",18],["ASN FM - Ninja Van at Denai Alam (PSG)",17]],"NKV late pickup":[["GEO - FM - Zaiyani Azly",2445],["ASN FM - Ninja Van at Denai Alam (PSG)",731],["PSN - ID - AZIELA",34],["BKW - ID - ASLAHUDDIN",33],["SBW - ID - MOHD AZAMIR ABDUL GANI",26],["GEO - FM - Jamal Zahari",26],["PWR - HD - ANAS",17],["KLU - FM - MUHAMMAD FAIZIN",16]],"NKV late poh":[["GEO - FM - Zaiyani Azly",1500],["ASN FM - Ninja Van at Sendayan Nilai",1079],["SIM - FM - NOOR FAIZAL",760],["SWG - FM - Muhammad Nurhafizuddin",638],["ASN FM - Ninja Vant at Ipoh (BTGD)",462],["ASN FM - Ninja Van at Melaka Raya (AYK)",410],["ASN FM - Ninja Van at Denai Alam (PSG)",274],["PSG - FM - AMIRUL HAKIM",215]],"DP dropoff on PH":[["ASN FM - Ninja Van at Denai Alam (PSG)",2],["KV1 - FM - Syafiq Sarwani",1]],"outlier":[]},"topShippers":[["TiktokMY (ELGINI MALAYSIA)",3690],["(RSPFS) BUBBLES O2 MARKETING SDN. BHD.",638],["DELYVA (BLINK BOOK SDN BHD)",565],["AFG 24 RESOURCES",563],["Lazada (KLP Sort Centre)",373],["TiktokMY (ADVO)",332],["TiktokMY (Panda eyes)",296],["Zalora (H&M)",283],["(RSPB2B MPS RDO) International Footwear (Penang) Sdn Bhd",258],["TiktokMY (Diamond Coating HQ Malaysia)",257]],"topODPairs":[["Selangor > Selangor",3840],["Pulau Pinang > Johor",2215],["Selangor > Kuala Lumpur",1468],["Pulau Pinang > Selangor",1347],["Selangor > Johor",1068],["Pulau Pinang > Pahang",740],["Selangor > Kedah",639],["Johor > Selangor",583],["Negeri Sembilan > Selangor",564],["Pulau Pinang > Kuala Lumpur",467]],"topDPNames":[["MBE at Kompleks Kenanga Wholesale City",522],["AM Hub at Subang Pelangi Selangor",347],["Pantas Network at Kenanga Wholesale City",275],["Es Parcel at Bandar Seri Botani",248],["Collectco at Plaza Idaman KL",241],["Triple Communication at Bandar Baru Ampang",239],["MBE at Denai Alam",211],["ASNP - Ninja Van at Jenjarom",171],["Dr Xpress at Selayang Indah",159],["ASNP - Ninja Van at Taman Kota Masai",152]],"topPOHDrivers":[["GEO - FM - Zaiyani Azly",1500,"25-Sep",1018],["ASN FM - Ninja Van at Sendayan Nilai",1079,"25-Sep",302],["SIM - FM - NOOR FAIZAL",760,"21-Sep",308],["SWG - FM - Muhammad Nurhafizuddin",638,"21-Sep",553],["ASN FM - Ninja Vant at Ipoh (BTGD)",462,"24-Sep",215],["ASN FM - Ninja Van at Melaka Raya (AYK)",410,"23-Sep",145],["KV4 - FM - Razni Rasman",305,"23-Sep",258],["ASN FM - Ninja Van at Denai Alam (PSG)",274,"26-Sep",94],["KV3 - FM - Faradilah Dawami",238,"23-Sep",215],["PSG - FM - AMIRUL HAKIM",215,"21-Sep",106]],"dailyCounts":[["21-Sep",3138],["22-Sep",3407],["23-Sep",4640],["24-Sep",3309],["25-Sep",3171],["26-Sep",1749],["27-Sep",1264]]},
+  40: {"total":18508,"categories":{"KV late DP pickup":5874,"KV late pickup":2291,"KV late poh":2115,"NKV late DP pickup":818,"NKV late pickup":2082,"NKV late poh":5302,"DP dropoff on PH":26,"outlier":0},"catHubs":{"KV late DP pickup":[["PUDO-KV-DEL",3497],["ASN FM KV",1078],["PUDO KV",542],["MM-MM",268],["D3-SYH-6-119",140],["D4-BTK-2-128",115],["D2-BTR-14-105",101],["D1-BMC-16-98",73]],"KV late pickup":[["PUDO KV",1726],["PUDO-KV-DEL",288],["ASN FM KV",84],["D4-STG-4-124",67],["D2-SHA-14-103",36],["D3-PKL-10-113",31],["D3-KAJ-6-121",24],["D1-STL-22-89",11]],"KV late poh":[["PUDO-KV-DEL",1107],["PUDO KV",628],["ASN FM KV",380]],"NKV late DP pickup":[["PUDO Johor",137],["ASN FM Melaka",123],["PUDO Negeri Sembilan",115],["ASN FM Negeri Sembilan",92],["ASN FM Kedah",66],["ASN FM Johor",63],["PUDO Melaka",53],["PUDO Penang",33]],"NKV late pickup":[["PUDO Penang",1442],["ASN FM Johor",507],["A3-PSN-28-26",56],["C1-PWR-17-58",23],["E3-SBW-1-144",15],["C1-TGI-17-57",11],["E4-MYY-1-150",9],["PUDO Johor",7]],"NKV late poh":[["ASN FM Negeri Sembilan",2696],["PUDO Penang",758],["ASN FM Johor",599],["ASN FM Melaka",395],["PUDO Kedah",382],["PUDO Johor",312],["ASN FM Kelantan",148],["ASN FM Perak",6]],"DP dropoff on PH":[["PUDO-KV-DEL",15],["MM-MM",4],["ASN FM Melaka",3],["PUDO KV",2],["A1-JTH-26-5",1],["ASN FM Negeri Sembilan",1]],"outlier":[]},"catDrivers":{"KV late DP pickup":[["KV2 - FM - Hazwan Mokhtar",376],["ASN FM - Ninja Van at Denai Alam Dua",322],["KV - OPS - Megat Hafidzul",217],["KV1 - FM - Muaiz Hafifi",215],["ASN FM - Ninja Van at Selayang",206],["KV5 - FM - Amin Khamis",186],["ASN FM - Ninja Van at Pandan Cahaya",183],["KV4 - FM - Khairi Hasan",145]],"KV late pickup":[["KV - IMP - ZAL - Izman Jais",1283],["KV3 - FM - Fitri Fizzani",285],["KV - IMP - SKV - Hilman Nudin",221],["KV - IMP - LEX - Afif Omar",210],["STG - ID - MUHAMMAD ROSLI",62],["ASNP - Ninja Van at Seksyen 23 Shah Alam",44],["ASN FM - Ninja Van at Selayang",40],["SHA - ID - SHAFIE",36]],"KV late poh":[["KV3 - FM - Fitri Fizzani",556],["KV - FM - Saiful Amri",263],["KV5 - FM - Azmi Hussain",188],["KV4 - FM - Nazmi Safri",142],["ASN FM - Ninja Van at Selayang",111],["KV5 - FM - Amin Khamis",111],["ASNP - Ninja Van at Seksyen 23 Shah Alam",103],["KV5 - FM - SUB PRO Klang",100]],"NKV late DP pickup":[["NIL - FM - Mohammad Himyal",102],["ASN FM - Ninja Van at Sendayan Nilai",77],["ASN FM - Ninja Van at Melaka Raya (AYK)",57],["MTG - FM - Muhammad Khaled",53],["NSJ - FM - Azzharul Syafiq",53],["PTN - FM - Mohd iskandar",51],["ASN FM - Ninja Van at Simpang Empat Kedah (SME)",47],["ASNP - Ninja Van at Tanjung Minyak",34]],"NKV late pickup":[["GEO - FM - Zaiyani Azly",1356],["ASN FM - Ninja Van at Denai Alam (PSG)",491],["SIM - FM - NOOR FAIZAL",83],["PSN - ID - AZIELA",52],["PWR - HD - ANAS",23],["ASNP - Ninja Van at Kempas Utama",16],["TGI - ID - AIMAN",11],["MYY - ID - DINO",9]],"NKV late poh":[["ASN FM - Ninja Van at Sendayan Nilai",2632],["ASN FM - Ninja Van at Denai Alam (PSG)",428],["ASN FM - Ninja Van at Melaka Raya (AYK)",395],["AOR - FM - Nazri Rosli",311],["SIM - FM - Nadzim Hairi",252],["SIM - FM - NOOR FAIZAL",190],["ASNP - Ninja Van at Kempas Utama",161],["ASNP - Ninja Van at Pengkalan Chepa",142]],"DP dropoff on PH":[["KV6 - FM - Syazwan Sopi",4],["KV3 - FM - Faizal Jelani",4],["ASN FM - Ninja Van at Melaka Raya (MTG)",3],["KV6 - FM - Habib Amirull",2],["KV1 - FM - Hafiz Melan",1],["KV3 - FM - Hafiz Nazri",1],["KV2 - FM - Bahron Kadir",1],["KV3 - FM - SUB PRO Panparasu",1]],"outlier":[]},"topShippers":[["DELYVA (BLINK BOOK SDN BHD)",1705],["TiktokMY (ELGINI MALAYSIA)",1383],["Zalora (H&M)",922],["Ninja Self Owned Store Pandan Indah - 24427",753],["Zalora Malaysia",501],["AFG 24 RESOURCES",435],["TiktokMY (Sabun dobi malaya)",311],["TiktokMY (HomeMax Borong)",249],["TiktokMY (ADVO)",231],["TiktokMY (Azdan.MY)",183]],"topODPairs":[["Selangor > Selangor",3826],["Selangor > Kuala Lumpur",1319],["Selangor > Perak",1103],["Pulau Pinang > Johor",718],["Selangor > Johor",697],["Pulau Pinang > Selangor",678],["Selangor > Kedah",583],["Selangor > Pulau Pinang",574],["Negeri Sembilan > Perak",546],["Negeri Sembilan > Terengganu",475]],"topDPNames":[["Pack N Mail at Serdang Perdana",369],["Dr Xpress at Selayang Indah",245],["AM Hub at Subang Pelangi Selangor",242],["ASNP - Ninja Van at Senawang",217],["Ninja Self Owned Store Pandan Indah",198],["4PL - CollectCo at Bandar Teknologi Kajang",140],["CLS EXPRESS at Seri Kembangan",139],["Ninja Self Owned Store Saujana Utama",136],["4PL - iExpress at Taman Setia Jaya Rawang",117],["4PL - CollectCo at Bukit Raja",114]],"topPOHDrivers":[["ASN FM - Ninja Van at Sendayan Nilai",2632,"03-Oct",738],["KV3 - FM - Fitri Fizzani",556,"01-Oct",399],["ASN FM - Ninja Van at Denai Alam (PSG)",428,"28-Sep",89],["ASN FM - Ninja Van at Melaka Raya (AYK)",395,"30-Sep",101],["AOR - FM - Nazri Rosli",311,"28-Sep",284],["KV - FM - Saiful Amri",263,"30-Sep",242],["SIM - FM - Nadzim Hairi",252,"30-Sep",76],["SIM - FM - NOOR FAIZAL",190,"01-Oct",159],["KV5 - FM - Azmi Hussain",188,"02-Oct",164],["ASNP - Ninja Van at Kempas Utama",161,"30-Sep",144]],"dailyCounts":[["28-Sep",1204],["29-Sep",2834],["30-Sep",5103],["01-Oct",3261],["02-Oct",2386],["03-Oct",2266],["04-Oct",1454]]},
+  41: {"total":20254,"categories":{"KV late DP pickup":7344,"KV late pickup":1360,"KV late poh":1610,"NKV late DP pickup":975,"NKV late pickup":2155,"NKV late poh":6808,"DP dropoff on PH":1,"outlier":1},"catHubs":{"KV late DP pickup":[["PUDO-KV-DEL",3615],["ASN FM KV",1702],["PUDO KV",705],["MM-MM",577],["D4-BTK-2-128",509],["D2-BTR-14-105",69],["D1-BMC-16-98",66],["D1-CKT-20-92",54]],"KV late pickup":[["PUDO KV",1141],["D3-KSR-10-110",69],["ASN FM KV",44],["PUDO-KV-DEL",30],["D4-KMU-2-130",22],["D1-CKT-20-92",11],["D1-PJY-18-95",11],["D3-PKL-10-113",11]],"KV late poh":[["PUDO KV",1258],["ASN FM KV",268],["PUDO-KV-DEL",83],["D1-RBY-20-90",1]],"NKV late DP pickup":[["PUDO Johor",170],["ASN FM Negeri Sembilan",164],["ASN FM Kedah",115],["ASN FM Melaka",96],["PUDO Penang",94],["SWG1-SWG1",61],["ASN FM Penang",34],["ASN FM Johor",34]],"NKV late pickup":[["ASN FM Negeri Sembilan",938],["ASN FM Johor",633],["PUDO Penang",184],["A3-PSN-28-26",108],["E3-BKW-1-149",94],["ASN FM Melaka",84],["PUDO Johor",17],["C1-TGI-17-57",17]],"NKV late poh":[["ASN FM Negeri Sembilan",3640],["PUDO Penang",1184],["PUDO Johor",634],["ASN FM Johor",611],["PUDO Pahang",448],["ASN FM Melaka",213],["ASN FM Kelantan",33],["SWG1-SWG1",21]],"DP dropoff on PH":[["PUDO-KV-DEL",1]],"outlier":[["B1-JER-31-30",1]]},"catDrivers":{"KV late DP pickup":[["ASN FM - Ninja Van at Pandan Cahaya",492],["ASN FM - Ninja Van at Denai Alam (PCK)",485],["BTK - ID - AISYAH ZAINUDIN",481],["KV5 - FM - Ajwan Bersani",227],["ASN FM - Ninja Van at Selayang",192],["KV6 - FM - Syazwan Sopi",187],["KV5 - FM - Nik Iskandar",183],["KV2 - FM - Hazwan Mokhtar",182]],"KV late pickup":[["KV - IMP - ZAL - Izman Jais",592],["KV - IMP - SKV - Hilman Nudin",296],["KV - IMP - LEX - Afif Omar",134],["KV2 - FM - Irfan Anuar",119],["KSR - ID - AMIERUL MUKMININ",69],["ASNP - Ninja Van at Seksyen 23 Shah Alam",33],["KMU - HR - KAMARIAH",22],["ASN FM - Ninja Van at Denai Alam Dua",19]],"KV late poh":[["KV6 - IMP - Afiq Farhan",566],["KV1 - FM - Asyrul Suhaimi",376],["KV2 - FM - SUB DC Serdang",134],["ASN FM - Ninja Van at Selayang",119],["ASN FM - Ninja Van at Denai Alam (PCK)",119],["KV4 - FM - Nazmi Safri",65],["KV - FM - Ikhwan Ismail",62],["KV3 - FM - Fitri Fizzani",44]],"NKV late DP pickup":[["ASN FM - Ninja Van at Senawang A",99],["ASN FM - Ninja Van at Sendayan Nilai",87],["ASN FM - Ninja Van at Simpang Empat Kedah (SME)",73],["GEO - FM - Zaiyani Azly",65],["ASN FM - Ninja Van at Melaka Raya (AYK)",45],["NSJ - FM - Azzharul Syafiq",38],["PSG - FM - Muhamamad Zahierudin",38],["ASN FM - Ninja Van at Bayan Lepas",30]],"NKV late pickup":[["ASN FM - Ninja Van at Senawang A",939],["ASN FM - Ninja Van at Denai Alam (PSG)",567],["PSN - ID - AZIELA",108],["BKW - ID - ASLAHUDDIN",94],["ASN FM - Ninja Van at Melaka Raya (AYK)",84],["ASNP - Ninja Van at Kempas Utama",82],["SIM - FM - Nadzim Hairi",80],["SIM - FM - SUB PRO BUKIT MINYAK",59]],"NKV late poh":[["ASN FM - Ninja Van at Sendayan Nilai",2595],["ASN FM - Ninja Van at Senawang A",966],["SIM - FM - Nadzim Hairi",743],["TMH - FM - Ikhwan Alif",424],["ASN FM - Ninja Van at Denai Alam (PSG)",386],["ASN FM - Ninja Van at Melaka Raya (AYK)",213],["ASNP - Ninja Van at Kempas Utama",179],["SIM - FM - SUB PRO BUKIT MINYAK",176]],"DP dropoff on PH":[["KV5 - FM - Ashabul Samsul",1]],"outlier":[["ASN FM - Ninja Van at Jerantut (JRA)",1]]},"topShippers":[["RICH MOMENT PHOTO SDN BHD",1789],["DELYVA (BLINK BOOK SDN BHD)",1069],["TiktokMY (ELGINI MALAYSIA)",590],["DELYVA (BLINK BOOK)",467],["Zalora Malaysia",451],["TiktokMY (MeowMe)",396],["Zalora (H&M)",393],["AFG 24 RESOURCES",338],["TiktokMY (VEENILA Collections)",217],["TiktokMY (Azdan.MY)",193]],"topODPairs":[["Selangor > Selangor",3914],["Selangor > Kuala Lumpur",1375],["Negeri Sembilan > Selangor",1364],["Selangor > Johor",1070],["Selangor > Kedah",790],["Negeri Sembilan > Kedah",651],["Pulau Pinang > Selangor",646],["Johor > Selangor",630],["Selangor > Pulau Pinang",545],["Negeri Sembilan > Terengganu",504]],"topDPNames":[["Ada Engineering at Bandar Parklands Klang",483],["Bee Parcel at Triang",426],["Ninja Self Owned Store Saujana Utama",271],["ASNP - Ninja Van at Taman Delima Banting",247],["MBE at Eco Majestic",241],["Dr Xpress at Selayang Indah",225],["ASNP - Ninja Van at Taman Kota Masai",221],["Alhena Sisters Design at Bandar Puncak Alam",205],["A&H EZPARCEL ENTERPRISE at Bukit Teratai",189],["ASNP - Ninja Van at Sungai Buloh New Village",181]],"topPOHDrivers":[["ASN FM - Ninja Van at Sendayan Nilai",2595,"08-Oct",687],["ASN FM - Ninja Van at Senawang A",966,"10-Oct",853],["SIM - FM - Nadzim Hairi",743,"11-Oct",605],["KV6 - IMP - Afiq Farhan",566,"08-Oct",286],["TMH - FM - Ikhwan Alif",424,"10-Oct",367],["ASN FM - Ninja Van at Denai Alam (PSG)",386,"08-Oct",127],["KV1 - FM - Asyrul Suhaimi",376,"08-Oct",322],["ASN FM - Ninja Van at Melaka Raya (AYK)",213,"07-Oct",101],["ASNP - Ninja Van at Kempas Utama",179,"11-Oct",71],["SIM - FM - SUB PRO BUKIT MINYAK",176,"11-Oct",69]],"dailyCounts":[["05-Oct",1799],["06-Oct",3736],["07-Oct",3799],["08-Oct",3247],["09-Oct",2414],["10-Oct",2851],["11-Oct",2408]]},
+};
+
+const CATS = ["KV late DP pickup","KV late pickup","KV late poh","NKV late DP pickup","NKV late pickup","NKV late poh","DP dropoff on PH","outlier"];
+const CAT_GROUP = c => c.startsWith("KV") ? "kv" : c.startsWith("NKV") ? "nkv" : "misc";
+const GROUP_COLOR = { kv: "var(--kv)", nkv: "var(--nkv)", misc: "var(--misc)" };
+
+// Anchor: 3 Aug 2026 (Mon) = start of W32. Weeks run Mon–Sun, matching the verified totals above.
+const ANCHOR = Date.UTC(2026, 7, 3);
+const DAY_MS = 86400000;
+
+function weekNumFor(date){ return 32 + Math.floor((date.getTime() - ANCHOR) / (7*DAY_MS)); }
+function weekLabelFor(wn){
+  const start = new Date(ANCHOR + (wn-32)*7*DAY_MS);
+  const end = new Date(start.getTime() + 6*DAY_MS);
+  const fmt = d => `${d.getUTCDate()} ${d.toLocaleString('en-US',{month:'short',timeZone:'UTC'})}`;
+  const startStr = start.getUTCMonth()===end.getUTCMonth() ? d3pad(start.getUTCDate()) : fmt(start);
+  return `W${wn} (${fmt(start)}–${fmt(end)})`;
+}
+function d3pad(n){ return n; }
+
+// ---------- State: build the weeks table ----------
+const weeks = {}; // weekNum -> { label, total, hasDetail, ...detail }
+Object.keys(SEED_TOTALS).forEach(k => {
+  const wn = Number(k);
+  weeks[wn] = Object.assign({ hasDetail:false }, SEED_TOTALS[k]);
+});
+Object.keys(DETAIL_WEEKS).forEach(k => {
+  const wn = Number(k);
+  weeks[wn] = Object.assign({ label: weekLabelFor(wn), hasDetail:true }, DETAIL_WEEKS[wn]);
+});
+
+function sortedWeekNums(){ return Object.keys(weeks).map(Number).sort((a,b)=>a-b); }
+let ORDER = sortedWeekNums();
+let LATEST = ORDER[ORDER.length-1];
+
+// ---------- Formatting ----------
+const fmt = n => n.toLocaleString('en-US');
+const pctFmt = n => (n >= 0 ? "+" : "") + n.toFixed(1) + "%";
+
+function deltaClass(curr, prev, favorableIsDown){
+  if (curr === prev) return "flat";
+  const down = curr < prev;
+  if (favorableIsDown) return down ? "favorable" : "unfavorable";
+  return down ? "unfavorable" : "favorable";
+}
+
+function kpiCard(cls, label, value, deltaHtml, foot){
+  return `<div class="kpi ${cls}">
+    <div class="kpi-label">${label}</div>
+    <div class="kpi-value">${value}</div>
+    ${deltaHtml}
+    <div class="kpi-foot">${foot}</div>
+  </div>`;
+}
+
+// ---------- Week select ----------
+const weekSelect = document.getElementById("weekSelect");
+function rebuildWeekSelect(selectedWn){
+  ORDER = sortedWeekNums();
+  LATEST = ORDER[ORDER.length-1];
+  weekSelect.innerHTML = "";
+  ORDER.forEach(wn => weekSelect.appendChild(new Option(weeks[wn].label, wn)));
+  weekSelect.value = selectedWn != null ? selectedWn : LATEST;
+}
+weekSelect.addEventListener("change", () => render(Number(weekSelect.value)));
+
+// ---------- Category tag logic ----------
+function fixTag(cat, detail){
+  const hubs = (detail.catHubs && detail.catHubs[cat]) || [];
+  const total = detail.categories[cat] || 0;
+  if (!hubs.length || total === 0) return { tag: "multi", label: "Multi-cause", pct: 0, topHub: null };
+  const top = hubs[0];
+  const pct = top[1] / total * 100;
+  if (pct >= 50) return { tag: "quick", label: "Quick win", pct, topHub: top[0] };
+  if (pct >= 30) return { tag: "partial", label: "Partial fix", pct, topHub: top[0] };
+  return { tag: "multi", label: "Multi-cause", pct, topHub: top[0] };
+}
+
+// ---------- Trend chart (inline SVG, last up to 4 weeks) ----------
+function renderTrend(curWn){
+  const span = ORDER.filter(wn => wn <= curWn).slice(-4);
+  const svg = document.getElementById("trendSvg");
+  const tooltip = document.getElementById("trendTooltip");
+  const W = 600, H = 220, padL = 48, padR = 16, padT = 16, padB = 30;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+
+  const vals = span.map(wn => weeks[wn].total);
+  const maxV = Math.max(...vals) * 1.08;
+  const minV = Math.min(0, Math.min(...vals) * 0.9);
+  const x = i => padL + (span.length === 1 ? plotW/2 : i/(span.length-1) * plotW);
+  const y = v => padT + plotH - ((v - minV) / (maxV - minV)) * plotH;
+
+  let svgParts = [];
+  // gridlines (4 rows)
+  const rows = 4;
+  for (let r=0; r<=rows; r++){
+    const v = minV + (maxV-minV) * r/rows;
+    const yy = y(v);
+    svgParts.push(`<line class="trend-grid" x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}"></line>`);
+    svgParts.push(`<text x="${padL-8}" y="${yy+4}" font-size="10" text-anchor="end">${Math.round(v/1000)}k</text>`);
+  }
+  // x labels
+  span.forEach((wn,i) => {
+    svgParts.push(`<text x="${x(i)}" y="${H-8}" font-size="10" text-anchor="middle">W${wn}</text>`);
+  });
+  // area + line
+  const linePts = span.map((wn,i) => `${x(i)},${y(weeks[wn].total)}`).join(" L ");
+  const areaPts = `M ${x(0)},${y(minV)} L ${linePts.replace(/^/, '')} L ${x(span.length-1)},${y(minV)} Z`;
+  svgParts.push(`<path class="trend-area" d="M ${x(0)},${y(minV)} L ${linePts} L ${x(span.length-1)},${y(minV)} Z"></path>`);
+  svgParts.push(`<path class="trend-line" d="M ${linePts}"></path>`);
+  // dots
+  span.forEach((wn,i) => {
+    svgParts.push(`<circle class="trend-dot ${wn===curWn?'cur':''}" cx="${x(i)}" cy="${y(weeks[wn].total)}" r="${wn===curWn?5:3.5}"></circle>`);
+  });
+  svgParts.push(`<line class="trend-crosshair" id="crosshair" x1="0" y1="${padT}" x2="0" y2="${H-padB}"></line>`);
+  svg.innerHTML = svgParts.join("");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+
+  const hoverTargets = span.map((wn,i) => ({wn, cx:x(i), cy:y(weeks[wn].total)}));
+  const wrap = document.getElementById("trendWrap");
+  svg.onmousemove = (e) => {
+    const rect = svg.getBoundingClientRect();
+    const scaleX = W / rect.width;
+    const mx = (e.clientX - rect.left) * scaleX;
+    let nearest = hoverTargets[0], best = Infinity;
+    hoverTargets.forEach(t => { const d = Math.abs(t.cx - mx); if (d < best){ best = d; nearest = t; } });
+    const ch = document.getElementById("crosshair");
+    ch.setAttribute("x1", nearest.cx); ch.setAttribute("x2", nearest.cx); ch.style.opacity = 1;
+    tooltip.style.opacity = 1;
+    tooltip.innerHTML = `<b>${weeks[nearest.wn].label}</b><br>${fmt(weeks[nearest.wn].total)} breaches`;
+    const wrapRect = wrap.getBoundingClientRect();
+    const px = (nearest.cx / W) * rect.width;
+    tooltip.style.left = Math.min(px + 12, wrapRect.width - 140) + "px";
+    tooltip.style.top = "6px";
+  };
+  svg.onmouseleave = () => { tooltip.style.opacity = 0; const ch = document.getElementById("crosshair"); if (ch) ch.style.opacity = 0; };
+}
+
+// ---------- Main render ----------
+function render(curWn){
+  const idx = ORDER.indexOf(curWn);
+  const hasPrev = idx > 0;
+  const prevWn = hasPrev ? ORDER[idx-1] : curWn;
+  const cur = weeks[curWn], prev = weeks[prevWn];
+  document.getElementById("prevWeekLabel").textContent = hasPrev ? prev.label : "— (first week loaded)";
+
+  // Data quality banner (W38's 16 Sep dip)
+  const dq = document.getElementById("dqBanner");
+  if (cur.dailyCounts){
+    const vals = cur.dailyCounts.map(d => d[1]);
+    const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
+    const low = cur.dailyCounts.filter(d => d[1] < avg*0.25);
+    if (low.length){
+      document.getElementById("dqText").textContent =
+        `${cur.label} — ${low.map(d=>`${d[0]} (${fmt(d[1])})`).join(", ")} shows volume far below the week's daily average (${fmt(Math.round(avg))}), against a range of ${fmt(Math.min(...vals))}–${fmt(Math.max(...vals))} on other days.`;
+      dq.hidden = false;
+    } else dq.hidden = true;
+  } else dq.hidden = true;
+
+  // ---- KPI strip ----
+  const wowTotal = hasPrev ? (cur.total - prev.total) / prev.total * 100 : null;
+  const kv = cur.hasDetail ? CATS.filter(c=>CAT_GROUP(c)==='kv').reduce((s,c)=>s+cur.categories[c],0) : null;
+  const nkv = cur.hasDetail ? CATS.filter(c=>CAT_GROUP(c)==='nkv').reduce((s,c)=>s+cur.categories[c],0) : null;
+  const dpph = cur.hasDetail ? cur.categories["DP dropoff on PH"] : null;
+  const outlier = cur.hasDetail ? cur.categories["outlier"] : null;
+  const prevHasDetail = prev.hasDetail;
+
+  function catDelta(curVal, prevVal){
+    if (curVal == null) return { html: `<div class="kpi-delta flat">no detail this week</div>`, foot: "" };
+    if (!hasPrev || !prevHasDetail || prevVal == null) return { html: `<div class="kpi-delta flat">first week with detail</div>`, foot: "WoW from next week's upload" };
+    const pct = (curVal - prevVal) / (prevVal || 1) * 100;
+    const cls = deltaClass(curVal, prevVal, true);
+    const arrow = curVal === prevVal ? "" : (curVal < prevVal ? "▼" : "▲");
+    return { html: `<div class="kpi-delta ${cls}">${arrow} ${pctFmt(pct)} WoW</div>`, foot: `Prior week: ${fmt(prevVal)}` };
+  }
+
+  const totalDelta = hasPrev
+    ? { html: `<div class="kpi-delta ${deltaClass(cur.total, prev.total, true)}">${cur.total===prev.total?'':(cur.total<prev.total?'▼':'▲')} ${pctFmt(wowTotal)} WoW</div>`, foot: `Prior week: ${fmt(prev.total)}` }
+    : { html: `<div class="kpi-delta flat">first week loaded</div>`, foot: "" };
+
+  const kvD = catDelta(kv, prev.hasDetail ? CATS.filter(c=>CAT_GROUP(c)==='kv').reduce((s,c)=>s+(prev.categories?prev.categories[c]:0),0) : null);
+  const nkvD = catDelta(nkv, prev.hasDetail ? CATS.filter(c=>CAT_GROUP(c)==='nkv').reduce((s,c)=>s+(prev.categories?prev.categories[c]:0),0) : null);
+  const dpphD = catDelta(dpph, prev.hasDetail ? prev.categories["DP dropoff on PH"] : null);
+  const outlierD = catDelta(outlier, prev.hasDetail ? prev.categories["outlier"] : null);
+
+  document.getElementById("kpiStrip").innerHTML = [
+    kpiCard("", `Total breaches — ${cur.label.split(" ")[0]}`, fmt(cur.total), totalDelta.html, totalDelta.foot),
+    kpiCard("", "Klang Valley (KV) total", kv!=null?fmt(kv):"—", kvD.html, kvD.foot),
+    kpiCard("nkv", "Non-KV (NKV) total", nkv!=null?fmt(nkv):"—", nkvD.html, nkvD.foot),
+    kpiCard("misc", "DP dropoff on PH", dpph!=null?fmt(dpph):"—", dpphD.html, dpphD.foot),
+    kpiCard("flat", "Outliers", outlier!=null?fmt(outlier):"—", outlierD.html, outlierD.foot)
+  ].join("");
+
+  // ---- Week totals table ----
+  const wtBody = document.querySelector("#weekTotalsTable tbody");
+  wtBody.innerHTML = "";
+  ORDER.forEach((wn,i) => {
+    const w = weeks[wn];
+    const p = i>0 ? weeks[ORDER[i-1]] : null;
+    const wow = p ? (w.total - p.total)/p.total*100 : null;
+    const tr = document.createElement("tr");
+    if (wn === curWn) tr.style.background = "var(--surface-2)";
+    tr.innerHTML = `<td>${w.label.split(" (")[0]}${w.hasDetail?'':''}</td><td class="n num">${fmt(w.total)}</td><td class="n delta ${p?deltaClass(w.total,p.total,true):'flat'}">${p?pctFmt(wow):"—"}</td>`;
+    wtBody.appendChild(tr);
+  });
+
+  // ---- Category list ----
+  const catList = document.getElementById("categoryList");
+  catList.innerHTML = "";
+  if (!cur.hasDetail){
+    catList.innerHTML = `<div class="no-detail">No category-level breakdown loaded for ${cur.label} — only the verified grand total is on file. Upload that week's raw export below to populate this view.</div>`;
+  } else {
+    const total = cur.total;
+    const ranked = CATS.map(c => ({ cat:c, count: cur.categories[c]||0 })).sort((a,b)=>b.count-a.count);
+    const maxCount = ranked[0].count;
+    ranked.forEach((r, i) => {
+      const share = total ? r.count/total*100 : 0;
+      const tag = fixTag(r.cat, cur);
+      const prevCount = (prevHasDetail && hasPrev) ? (prev.categories[r.cat]||0) : null;
+      const wowHtml = prevCount != null
+        ? (()=>{ const p = (r.count-prevCount)/(prevCount||1)*100; const cls = deltaClass(r.count, prevCount, true); return `<span class="delta ${cls}">${r.count===prevCount?'—':pctFmt(p)}</span>`; })()
+        : `<span style="color:var(--muted);">—</span>`;
+
+      const li = document.createElement("li");
+      li.className = "cat-row";
+      const hubs = (cur.catHubs && cur.catHubs[r.cat]) || [];
+      const drivers = (cur.catDrivers && cur.catDrivers[r.cat]) || [];
+      const hubMax = hubs.length ? hubs[0][1] : 1;
+      const drvMax = drivers.length ? drivers[0][1] : 1;
+      li.innerHTML = `
+        <button class="cat-row-main" type="button">
+          <span class="cat-rank num">${i+1}</span>
+          <span class="cat-name">${r.cat}</span>
+          <span class="cat-bar-wrap"><span class="cat-bar" style="width:${maxCount?r.count/maxCount*100:0}%; background:${GROUP_COLOR[CAT_GROUP(r.cat)]};"></span></span>
+          <span class="cat-count">${fmt(r.count)}</span>
+          <span class="cat-share">${share.toFixed(1)}%</span>
+          <span class="cat-wow">${wowHtml}</span>
+          <span class="cat-fix"><span class="fixtag ${tag.tag}">${tag.label}</span></span>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
+        <div class="cat-detail">
+          <div class="cat-detail-grid">
+            <div>
+              <h4>Top origin hubs</h4>
+              ${hubs.length ? hubs.map(h => `<div class="minibar-row"><span class="minibar-label">${h[0]}</span><span class="minibar-track"><span class="minibar-fill" style="width:${h[1]/hubMax*100}%;"></span></span><span class="minibar-val num">${fmt(h[1])}</span></div>`).join("") : '<div class="no-detail" style="padding:4px 0;">No hub breakdown for this category.</div>'}
+            </div>
+            <div>
+              <h4>Top drivers</h4>
+              ${drivers.length ? drivers.map(d => `<div class="minibar-row"><span class="minibar-label">${d[0]}</span><span class="minibar-track"><span class="minibar-fill" style="width:${d[1]/drvMax*100}%; background:var(--nkv);"></span></span><span class="minibar-val num">${fmt(d[1])}</span></div>`).join("") : '<div class="no-detail" style="padding:4px 0;">No driver breakdown for this category.</div>'}
+            </div>
+          </div>
+        </div>
+      `;
+      li.querySelector(".cat-row-main").addEventListener("click", () => li.classList.toggle("open"));
+      catList.appendChild(li);
+    });
+  }
+
+  // ---- Deep dive tables ----
+  function fillTable(id, rows, cols){
+    const tbody = document.querySelector(`#${id} tbody`);
+    tbody.innerHTML = "";
+    if (!rows || !rows.length){
+      tbody.innerHTML = `<tr><td colspan="${cols}" class="no-detail">No data loaded for this week.</td></tr>`;
+      return;
+    }
+    rows.forEach(r => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = cols === 2
+        ? `<td>${r[0]}</td><td class="n num">${fmt(r[1])}</td>`
+        : `<td>${r[0]}</td><td class="n num">${fmt(r[1])}</td><td>${r[2]} <span class="spike-pill" style="${r[3]/r[1] >= 0.6 ? '' : 'display:none;'}">${r[3]/r[1]>=0.6? Math.round(r[3]/r[1]*100)+'% one day':''}</span></td>`;
+      tbody.appendChild(tr);
+    });
+  }
+  fillTable("shipperTable", cur.topShippers, 2);
+  fillTable("odTable", cur.topODPairs, 2);
+  fillTable("dpTable", cur.topDPNames, 2);
+  fillTable("pohTable", cur.topPOHDrivers, 3);
+
+  renderTrend(curWn);
+}
+
+// ---------- CSV upload / merge ----------
+const HEADER_ALIASES = {
+  sub_breach_dept: ["sub_breach_dept"],
+  first_attempt_date: ["first_attempt_date"],
+  origin_hub_name: ["origin_hub_name"],
+  driver_name: ["driver name"],
+  shipper_name: ["shipper_name"],
+  od_pair: ["od pair"],
+  dp_name: ["dp name"]
+};
+function findKey(row, aliases){
+  const keys = Object.keys(row);
+  for (const a of aliases){
+    const hit = keys.find(k => k.trim().toLowerCase() === a);
+    if (hit) return hit;
+  }
+  return null;
+}
+const MONTHS = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+// The source export's date format varies week to week — seen both "16-Sep-26" and "20/08/2026" across
+// real weekly exports, so both are handled rather than assuming one.
+function parseDMY(s){
+  if (!s) return null;
+  const str = String(s).trim();
+  let m = str.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{2})$/);
+  if (m){
+    const mon = MONTHS[m[2].toLowerCase()];
+    if (mon == null) return null;
+    return new Date(Date.UTC(2000 + Number(m[3]), mon, Number(m[1])));
+  }
+  m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m){
+    const day = Number(m[1]), mon = Number(m[2]) - 1, year = Number(m[3]);
+    if (mon < 0 || mon > 11) return null;
+    return new Date(Date.UTC(year, mon, day));
+  }
+  return null;
+}
+
+function topN(map, n){
+  return Array.from(map.entries()).sort((a,b)=>b[1]-a[1]).slice(0,n).map(([k,v])=>[k,v]);
+}
+
+function aggregateRows(rows){
+  // group by week number first
+  const byWeek = new Map();
+  const keyCache = {};
+  if (rows.length){
+    const r0 = rows[0];
+    keyCache.sbd = findKey(r0, HEADER_ALIASES.sub_breach_dept);
+    keyCache.fad = findKey(r0, HEADER_ALIASES.first_attempt_date);
+    keyCache.hub = findKey(r0, HEADER_ALIASES.origin_hub_name);
+    keyCache.drv = findKey(r0, HEADER_ALIASES.driver_name);
+    keyCache.shp = findKey(r0, HEADER_ALIASES.shipper_name);
+    keyCache.od = findKey(r0, HEADER_ALIASES.od_pair);
+    keyCache.dp = findKey(r0, HEADER_ALIASES.dp_name);
+    // Guard: some exports (seen in W40) have the Driver name / Dp name column contents swapped.
+    // Normal weeks: Driver name ~2% blank, Dp name ~60% blank. If reversed, swap which column is read as which.
+    if (keyCache.drv && keyCache.dp){
+      let drvBlank = 0, dpBlank = 0;
+      rows.forEach(r => { if (!String(r[keyCache.drv]||"").trim()) drvBlank++; if (!String(r[keyCache.dp]||"").trim()) dpBlank++; });
+      if (drvBlank > dpBlank){ const t = keyCache.drv; keyCache.drv = keyCache.dp; keyCache.dp = t; aggregateRows.swapped = true; }
+      else aggregateRows.swapped = false;
+    }
+  }
+  rows.forEach(row => {
+
+    const dateStr = keyCache.fad ? row[keyCache.fad] : null;
+    const d = parseDMY(dateStr);
+    if (!d) return;
+    const wn = weekNumFor(d);
+    if (!byWeek.has(wn)) byWeek.set(wn, []);
+    byWeek.get(wn).push(row);
+  });
+
+  const results = new Map();
+  byWeek.forEach((wrows, wn) => {
+    const categories = {}; CATS.forEach(c => categories[c] = 0);
+    const catHubMaps = {}; const catDrvMaps = {};
+    CATS.forEach(c => { catHubMaps[c] = new Map(); catDrvMaps[c] = new Map(); });
+    const shipperMap = new Map(), odMap = new Map(), dpMap = new Map();
+    const pohDriverMap = new Map(); const pohDriverDays = new Map();
+    const dailyMap = new Map();
+
+    wrows.forEach(row => {
+      const rawCat = keyCache.sbd ? row[keyCache.sbd] : "";
+      const cat = String(rawCat || "").replace(/^FM:\s*/,"").trim();
+      if (!CATS.includes(cat)) return;
+      categories[cat] = (categories[cat]||0) + 1;
+
+      const hub = keyCache.hub ? String(row[keyCache.hub]||"").trim() : "";
+      if (hub) catHubMaps[cat].set(hub, (catHubMaps[cat].get(hub)||0)+1);
+      const drv = keyCache.drv ? String(row[keyCache.drv]||"").trim() : "";
+      if (drv) catDrvMaps[cat].set(drv, (catDrvMaps[cat].get(drv)||0)+1);
+
+      const shp = keyCache.shp ? String(row[keyCache.shp]||"").trim() : "";
+      if (shp) shipperMap.set(shp, (shipperMap.get(shp)||0)+1);
+      const od = keyCache.od ? String(row[keyCache.od]||"").trim() : "";
+      if (od) odMap.set(od, (odMap.get(od)||0)+1);
+      const dp = keyCache.dp ? String(row[keyCache.dp]||"").trim() : "";
+      if (dp) dpMap.set(dp, (dpMap.get(dp)||0)+1);
+
+      const d = parseDMY(keyCache.fad ? row[keyCache.fad] : null);
+      const dayLabel = d ? `${d.getUTCDate()} ${d.toLocaleString('en-US',{month:'short',timeZone:'UTC'})}` : "?";
+      dailyMap.set(dayLabel, (dailyMap.get(dayLabel)||0)+1);
+
+      if (cat === "KV late poh" || cat === "NKV late poh"){
+        if (drv){
+          pohDriverMap.set(drv, (pohDriverMap.get(drv)||0)+1);
+          if (!pohDriverDays.has(drv)) pohDriverDays.set(drv, new Map());
+          const dm = pohDriverDays.get(drv);
+          dm.set(dayLabel, (dm.get(dayLabel)||0)+1);
+        }
+      }
+    });
+
+    const catHubs = {}, catDrivers = {};
+    CATS.forEach(c => { catHubs[c] = topN(catHubMaps[c], 8); catDrivers[c] = topN(catDrvMaps[c], 8); });
+
+    const topPOHDriversArr = topN(pohDriverMap, 10).map(([drv,cnt]) => {
+      const days = pohDriverDays.get(drv);
+      const best = topN(days, 1)[0] || ["?",0];
+      return [drv, cnt, best[0], best[1]];
+    });
+
+    results.set(wn, {
+      total: wrows.length,
+      hasDetail: true,
+      categories,
+      catHubs,
+      catDrivers,
+      topShippers: topN(shipperMap, 10),
+      topODPairs: topN(odMap, 10),
+      topDPNames: topN(dpMap, 10),
+      topPOHDrivers: topPOHDriversArr,
+      dailyCounts: topN(dailyMap, 31).sort((a,b)=>{
+        // keep chronological rather than by count for the daily table
+        return 0;
+      })
+    });
+  });
+  return results;
+}
+
+function mergeParsedWeeks(map){
+  let addedOrUpdated = [];
+  map.forEach((detail, wn) => {
+    weeks[wn] = Object.assign({ label: weekLabelFor(wn) }, detail);
+    addedOrUpdated.push(wn);
+  });
+  return addedOrUpdated;
+}
+
+// ---------- Upload wiring ----------
+const uploadZone = document.getElementById("uploadZone");
+const fileInput = document.getElementById("fileInput");
+const uploadStatus = document.getElementById("uploadStatus");
+
+uploadZone.addEventListener("click", () => fileInput.click());
+["dragover","dragenter"].forEach(evt => uploadZone.addEventListener(evt, e => { e.preventDefault(); uploadZone.classList.add("drag"); }));
+["dragleave","drop"].forEach(evt => uploadZone.addEventListener(evt, e => { e.preventDefault(); uploadZone.classList.remove("drag"); }));
+uploadZone.addEventListener("drop", e => { handleFiles(e.dataTransfer.files); });
+fileInput.addEventListener("change", e => { handleFiles(e.target.files); });
+
+function handleFiles(fileList){
+  const files = Array.from(fileList || []);
+  if (!files.length) return;
+  uploadStatus.textContent = `Parsing ${files.length} file(s)...`;
+  uploadStatus.className = "upload-status";
+  let allRows = [];
+  let remaining = files.length;
+  files.forEach(file => {
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (res) => {
+        allRows = allRows.concat(res.data);
+        remaining -= 1;
+        if (remaining === 0) finishUpload(allRows, files.map(f=>f.name));
+      },
+      error: (err) => {
+        remaining -= 1;
+        uploadStatus.textContent = `Error parsing a file: ${err.message}`;
+        uploadStatus.className = "upload-status err";
+      }
+    });
+  });
+}
+
+function finishUpload(rows, names){
+  try{
+    const byWeek = aggregateRows(rows);
+    if (!byWeek.size){
+      uploadStatus.textContent = `No rows matched the expected columns / date format in ${names.join(", ")}.`;
+      uploadStatus.className = "upload-status err";
+      return;
+    }
+    const wns = mergeParsedWeeks(byWeek);
+    rebuildWeekSelect(Math.max(...wns));
+    render(Math.max(...wns));
+    uploadStatus.textContent = `Loaded ${fmt(rows.length)} rows from ${names.join(", ")} → ${wns.map(w=>weeks[w].label).join(", ")}.`;
+    uploadStatus.className = "upload-status ok";
+  } catch(e){
+    uploadStatus.textContent = `Could not process file: ${e.message}`;
+    uploadStatus.className = "upload-status err";
+  }
+}
+
+// ---------- Boot ----------
+rebuildWeekSelect(LATEST);
+render(LATEST);
+
+})();
+</script>
+
+</body></html>
